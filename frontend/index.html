@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ExpenseBuddy</title>
+    <meta charset="UTF-8">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            min-height: 100vh;
+            padding: 40px;
+        }
+
+        .dashboard {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        /* Card Style */
+        .card {
+            background: rgb(240, 223, 195);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(219, 107, 2, 0.169);
+            margin-bottom: 25px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        input {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #1a1919;
+            width: 100%;
+        }
+
+        button {
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .primary-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            transition: 0.3s;
+        }
+
+        .primary-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .edit-btn {
+            background: #ffc107;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e1dede;
+        }
+
+        th {
+            background: #cd600c;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .total-card {
+            background: linear-gradient(45deg, #43cea2, #185a9d);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .message {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .empty {
+            text-align: center;
+            color: gray;
+            margin-top: 15px;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="dashboard">
+
+    <h1>💸Track your finances all with ease💰 </h1>
+    
+
+    <!-- Form Card -->
+    <div class="card">
+        <input type="hidden" id="expense_id">
+
+        <div class="form-grid">
+            <input type="text" id="title" placeholder="Name of the products">
+            <input type="number" id="amount" placeholder="Amount">
+            <input type="text" id="category" placeholder="Category">
+            <input type="date" id="date">
+        </div>
+
+        <br>
+        <button class="primary-btn" onclick="addOrUpdateExpense()">💾 Save Expense</button>
+
+        <div class="message" id="message"></div>
+    </div>
+
+    <!-- Table Card -->
+    <div class="card">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name of the products</th>
+                    <th>Amount </th>
+                    <th>Category </th>
+                    <th>Date </th>
+                    <th>Actions </th>
+                </tr>
+            </thead>
+            <tbody id="expenseTable"></tbody>
+        </table>
+
+        <div class="empty" id="emptyState">
+            <h5>No expenses added yet!</h5>
+            <h5>Start by adding your expense📝</h5>
+        </div>
+    </div>
+
+    <!-- Total Card -->
+    <div class="total-card">
+        💰 Total Spent: ₹ <span id="totalAmount">0</span>
+    </div>
+
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
