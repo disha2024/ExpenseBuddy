@@ -1,9 +1,14 @@
 const API_URL = "http://127.0.0.1:8000";
 
+/* ================= FETCH ALL EXPENSES ================= */
 async function fetchExpenses() {
     const response = await fetch(`${API_URL}/expenses`);
     const data = await response.json();
+    displayExpenses(data);
+}
 
+/* ================= DISPLAY EXPENSES ================= */
+function displayExpenses(data) {
     const table = document.getElementById("expenseTable");
     const emptyState = document.getElementById("emptyState");
     const totalAmount = document.getElementById("totalAmount");
@@ -39,6 +44,7 @@ async function fetchExpenses() {
     totalAmount.innerText = total.toFixed(2);
 }
 
+/* ================= ADD / UPDATE EXPENSE ================= */
 async function addOrUpdateExpense() {
     const id = document.getElementById("expense_id").value;
     const title = document.getElementById("title").value;
@@ -83,6 +89,7 @@ async function addOrUpdateExpense() {
     }
 }
 
+/* ================= EDIT ================= */
 function editExpense(id, title, amount, category, date) {
     document.getElementById("expense_id").value = id;
     document.getElementById("title").value = title;
@@ -91,6 +98,7 @@ function editExpense(id, title, amount, category, date) {
     document.getElementById("date").value = date;
 }
 
+/* ================= DELETE ================= */
 async function deleteExpense(id) {
     if (!confirm("⚠️ Are you sure you want to delete this expense?")) return;
 
@@ -102,6 +110,29 @@ async function deleteExpense(id) {
     fetchExpenses();
 }
 
+/* ================= FILTER BY CATEGORY ================= */
+async function filterExpenses() {
+    const category = document.getElementById("filterCategory").value;
+
+    let url = `${API_URL}/expenses`;
+
+    if (category) {
+        url += `?category=${category}`;
+    }
+
+    const response = await fetch(url);
+    const data = await response.json();
+
+    displayExpenses(data);
+}
+
+/* ================= RESET FILTER ================= */
+function loadExpenses() {
+    document.getElementById("filterCategory").value = "";
+    fetchExpenses();
+}
+
+/* ================= CLEAR FORM ================= */
 function clearFields() {
     document.getElementById("expense_id").value = "";
     document.getElementById("title").value = "";
@@ -110,6 +141,7 @@ function clearFields() {
     document.getElementById("date").value = "";
 }
 
+/* ================= MESSAGE ================= */
 function showMessage(message, color) {
     const msg = document.getElementById("message");
     msg.innerText = message;
@@ -120,4 +152,5 @@ function showMessage(message, color) {
     }, 3000);
 }
 
+/* ================= INITIAL LOAD ================= */
 fetchExpenses();

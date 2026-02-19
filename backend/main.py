@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 from datetime import date
+from typing import Optional
+
 
 app = FastAPI()
 
@@ -49,7 +51,14 @@ def add_expense(expense: Expense):
 
 # ✅ Get All Expenses
 @app.get("/expenses")
-def get_all_expenses():
+def get_expenses(category: Optional[str] = None):
+    if category:
+        filtered_expenses = [
+            e for e in expenses
+            if e["category"].lower() == category.lower()
+        ]
+        return filtered_expenses
+
     return expenses
 
 
