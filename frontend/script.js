@@ -1,156 +1,251 @@
-const API_URL = "http://127.0.0.1:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
-/* ================= FETCH ALL EXPENSES ================= */
-async function fetchExpenses() {
-    const response = await fetch(`${API_URL}/expenses`);
-    const data = await response.json();
-    displayExpenses(data);
+// GET TOKEN FROM LOCAL STORAGE
+function getToken() {
+    return localStorage.getItem("access_token");
 }
 
-/* ================= DISPLAY EXPENSES ================= */
-function displayExpenses(data) {
-    const table = document.getElementById("expenseTable");
-    const emptyState = document.getElementById("emptyState");
-    const totalAmount = document.getElementById("totalAmount");
+// ADD EXPENSE
+async function addExpense(title, amount, category, date) {
+    try {
+        const token = getToken();
+        if (!token) {
+            alert("You must be logged in to add an expense");
+            return;
+        }
 
-    table.innerHTML = "";
-    let total = 0;
+        const response = await fetch(`${API_BASE}/expenses`, {
+            method: "POST",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, amount, category, date: date || null })
+        });
 
-    if (data.length === 0) {
-        emptyState.style.display = "block";
-    } else {
-        emptyState.style.display = "none";
+        if (response.ok) {
+            alert("Expense Added Successfully!");
+            clearForm();
+            loadExpenses();
+        } else {
+            const error = await response.json();
+            console.log("Error:", error);
+            alert("Error adding expense: " + JSON.stringify(error.detail));
+        }
+    } catch (err) {
+        console.error("Error:", err);
+        alert("Server not reachable");
     }
-
-    data.forEach(expense => {
-        total += expense.amount;
-
-        const row = `
-            <tr>
-                <td>${expense.id}</td>
-                <td>${expense.title}</td>
-                <td>₹${expense.amount}</td>
-                <td>${expense.category}</td>
-                <td>${expense.date}</td>
-                <td>
-                    <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.title}', ${expense.amount}, '${expense.category}', '${expense.date}')">Edit</button>
-                    <button class="delete-btn" onclick="deleteExpense(${expense.id})">Delete</button>
-                </td>
-            </tr>
-        `;
-        table.innerHTML += row;
-    });
-
-    totalAmount.innerText = total.toFixed(2);
 }
 
-/* ================= ADD / UPDATE EXPENSE ================= */
-async function addOrUpdateExpense() {
-    const id = document.getElementById("expense_id").value;
-    const title = document.getElementById("title").value;
-    const amount = document.getElementById("amount").value;
-    const category = document.getElementById("category").value;
+// UPDATE EXPENSE
+async function updateExpense(id, title, amount, category, date) {
+    try {
+        const token = getToken();
+        if (!token) {
+            alert("You must be logged in to update an expense");
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/expenses/${id}`, {
+            method: "PUT",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({ title, amount, category, date: date || null })
+        });
+
+        if (response.ok) {
+            alert("Expense Updated Successfully!");
+            clearForm();
+            loadExpenses();
+        } else {
+            const error = await response.json();
+            console.log("Error:", error);
+            alert("Error updating expense: " + JSON.stringify(error.detail));
+        }
+    } catch (err) {
+        console.error("Error:", err);
+        alert("Server not reachable");
+    }
+}
+
+// SAVE EXPENSE (Create or Update)
+function saveExpense() {
+    const expense_id = document.getElementById("expense_id").value;
+    const title = document.getElementById("title").value.trim();
+    const amount = parseFloat(document.getElementById("amount").value);
+    const category = document.getElementById("category").value.trim();
     const date = document.getElementById("date").value;
 
-    if (!title || !amount || !category || !date) {
-        showMessage("⚠️ Please fill all fields", "red");
+    if (!title || !amount || !category) {
+        alert("Please fill in all fields");
         return;
     }
 
-    const expenseData = {
-        title: title,
-        amount: Number(amount),
-        category: category,
-        date: date
-    };
-
-    let response;
-
-    if (id) {
-        response = await fetch(`${API_URL}/expenses/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(expenseData)
-        });
+    if (expense_id) {
+        updateExpense(parseInt(expense_id), title, amount, category, date);
     } else {
-        response = await fetch(`${API_URL}/expenses`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(expenseData)
-        });
-    }
-
-    if (response.ok) {
-        showMessage("✅ Expense Saved Successfully!", "green");
-        clearFields();
-        fetchExpenses();
-    } else {
-        showMessage("❌ Something went wrong!", "red");
+        addExpense(title, amount, category, date);
     }
 }
 
-/* ================= EDIT ================= */
+// CLEAR FORM
+function clearForm() {
+    document.getElementById("title").value = "";
+    document.getElementById("amount").value = "";
+    document.getElementById("category").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("expense_id").value = "";
+    document.getElementById("message").textContent = "";
+    document.getElementById("cancelBtn").style.display = "none";
+}
+
+// EDIT EXPENSE
 function editExpense(id, title, amount, category, date) {
     document.getElementById("expense_id").value = id;
     document.getElementById("title").value = title;
     document.getElementById("amount").value = amount;
     document.getElementById("category").value = category;
     document.getElementById("date").value = date;
+    document.getElementById("cancelBtn").style.display = "inline-block";
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
 }
 
-/* ================= DELETE ================= */
-async function deleteExpense(id) {
-    if (!confirm("⚠️ Are you sure you want to delete this expense?")) return;
-
-    await fetch(`${API_URL}/expenses/${id}`, {
-        method: "DELETE"
-    });
-
-    showMessage("🗑️ Expense Deleted Successfully!", "green");
-    fetchExpenses();
+// CANCEL EDIT
+function cancelEdit() {
+    clearForm();
 }
 
-/* ================= FILTER BY CATEGORY ================= */
+// FILTER EXPENSES
 async function filterExpenses() {
-    const category = document.getElementById("filterCategory").value;
-
-    let url = `${API_URL}/expenses`;
-
-    if (category) {
-        url += `?category=${category}`;
+    const filterCategory = document.getElementById("filterCategory").value.trim().toLowerCase();
+    
+    if (!filterCategory) {
+        loadExpenses();
+        return;
     }
 
-    const response = await fetch(url);
-    const data = await response.json();
+    try {
+        const token = getToken();
+        if (!token) {
+            alert("You must be logged in");
+            return;
+        }
 
-    displayExpenses(data);
+        const response = await fetch(`${API_BASE}/expenses`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            alert("Error fetching expenses");
+            return;
+        }
+
+        const expenses = await response.json();
+        const filtered = expenses.filter(exp => 
+            exp.category.toLowerCase().includes(filterCategory)
+        );
+
+        displayExpenses(filtered);
+    } catch (err) {
+        console.error("Error:", err);
+    }
 }
 
-/* ================= RESET FILTER ================= */
-function loadExpenses() {
-    document.getElementById("filterCategory").value = "";
-    fetchExpenses();
+// DISPLAY EXPENSES
+function displayExpenses(expenses) {
+    const tableBody = document.getElementById("expenseTable");
+    const emptyState = document.getElementById("emptyState");
+
+    tableBody.innerHTML = "";
+
+    if (expenses.length === 0) {
+        emptyState.style.display = "block";
+        return;
+    }
+
+    emptyState.style.display = "none";
+
+    let totalAmount = 0;
+
+    expenses.forEach(expense => {
+        totalAmount += expense.amount;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${expense.id}</td>
+            <td>${expense.title}</td>
+            <td>₹${expense.amount.toFixed(2)}</td>
+            <td>${expense.category}</td>
+            <td>${expense.date}</td>
+            <td>
+                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.title}', ${expense.amount}, '${expense.category}', '${expense.date}')">✏️ Edit</button>
+                <button class="delete-btn" onclick="deleteExpense(${expense.id})">🗑️ Delete</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
 }
 
-/* ================= CLEAR FORM ================= */
-function clearFields() {
-    document.getElementById("expense_id").value = "";
-    document.getElementById("title").value = "";
-    document.getElementById("amount").value = "";
-    document.getElementById("category").value = "";
-    document.getElementById("date").value = "";
+// LOAD EXPENSES (Complete version)
+async function loadExpenses() {
+    try {
+        const token = getToken();
+        if (!token) {
+            alert("You must be logged in");
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/expenses`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            alert("Error fetching expenses");
+            return;
+        }
+
+        const expenses = await response.json();
+        displayExpenses(expenses);
+    } catch (err) {
+        console.error("Error:", err);
+    }
 }
 
-/* ================= MESSAGE ================= */
-function showMessage(message, color) {
-    const msg = document.getElementById("message");
-    msg.innerText = message;
-    msg.style.color = color;
+// DELETE EXPENSE
+async function deleteExpense(id) {
+    if (!confirm("Are you sure you want to delete this expense?")) return;
 
-    setTimeout(() => {
-        msg.innerText = "";
-    }, 3000);
+    try {
+        const token = getToken();
+        if (!token) {
+            alert("You must be logged in to delete an expense");
+            return;
+        }
+
+        const response = await fetch(`${API_BASE}/expenses/${id}`, {
+            method: "DELETE",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            loadExpenses();
+        } else {
+            alert("Error deleting expense");
+        }
+    } catch (err) {
+        console.error("Error:", err);
+    }
 }
-
-/* ================= INITIAL LOAD ================= */
-fetchExpenses();
