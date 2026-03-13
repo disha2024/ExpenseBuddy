@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ExpenseBuddy — Dashboard</title>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background: linear-gradient(135deg, #1f1c2c, #928dab); min-height: 100vh; padding: 30px; }
+
+        /* TOP NAV */
+        .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .topbar h1 { color: white; font-size: 26px; }
+        .back-btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.3s; }
+        .back-btn:hover { transform: scale(1.05); }
+
+        /* MONTH PICKER */
+        .controls { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .controls label { color: white; font-weight: bold; font-size: 14px; }
+        .controls input[type="month"] { padding: 10px 14px; border-radius: 8px; border: none; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+        /* STAT CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .stat-card { border-radius: 15px; padding: 22px; color: white; text-align: center; }
+        .stat-card.blue   { background: linear-gradient(135deg, #667eea, #764ba2); }
+        .stat-card.green  { background: linear-gradient(135deg, #43cea2, #185a9d); }
+        .stat-card.orange { background: linear-gradient(135deg, #f7971e, #cd600c); }
+        .stat-card.pink   { background: linear-gradient(135deg, #e05c97, #764ba2); }
+        .stat-label { font-size: 13px; opacity: 0.85; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: bold; }
+
+        /* CHARTS GRID */
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .chart-card { background: rgb(220, 196, 158); border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .chart-card h3 { margin-bottom: 18px; color: #333; font-size: 16px; }
+        .chart-card.full { grid-column: 1 / -1; }
+
+        /* CATEGORY TABLE */
+        .cat-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .cat-table th, .cat-table td { padding: 10px 14px; text-align: left; border-bottom: 1px solid #e1dede; font-size: 14px; }
+        .cat-table th { background: #cd600c; color: white; }
+        .cat-table tr:hover { background: #f5efe6; }
+
+        .no-data { text-align: center; color: #888; font-style: italic; padding: 20px; }
+
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .chart-card.full { grid-column: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+    <h1>📊 Dashboard — <span id="pageMonthLabel" style="color:#43cea2;"></span></h1>
+    <a href="index.html" class="back-btn">← Back to Expenses</a>
+</div>
+
+<!-- MONTH PICKER -->
+<div class="controls">
+    <label>📅 Select Month:</label>
+    <input type="month" id="selectedMonth" onchange="loadDashboard()">
+</div>
+
+<!-- STAT CARDS -->
+<div class="stats-grid">
+    <div class="stat-card green">
+        <div class="stat-label">Total Spending</div>
+        <div class="stat-value">₹<span id="statTotal">0</span></div>
+    </div>
+    <div class="stat-card orange">
+        <div class="stat-label">Transactions</div>
+        <div class="stat-value"><span id="statCount">0</span></div>
+    </div>
+    <div class="stat-card blue">
+        <div class="stat-label">Avg per Transaction</div>
+        <div class="stat-value">₹<span id="statAvg">0</span></div>
+    </div>
+    <div class="stat-card pink">
+        <div class="stat-label">Top Category</div>
+        <div class="stat-value" id="statTop" style="font-size:18px;">—</div>
+    </div>
+</div>
+
+<!-- CHARTS -->
+<div class="charts-grid">
+
+    <!-- PIE CHART -->
+    <div class="chart-card">
+        <h3>🥧 Spending by Category</h3>
+        <canvas id="pieChart"></canvas>
+        <div id="pieEmpty" class="no-data" style="display:none;">No data this month</div>
+    </div>
+
+    <!-- BAR CHART -->
+    <div class="chart-card">
+        <h3>📊 Category Comparison</h3>
+        <canvas id="barChart"></canvas>
+        <div id="barEmpty" class="no-data" style="display:none;">No data this month</div>
+    </div>
+
+    <!-- LINE CHART — daily spending trend -->
+    <div class="chart-card full">
+        <h3>📈 Daily Spending Trend</h3>
+        <canvas id="lineChart"></canvas>
+        <div id="lineEmpty" class="no-data" style="display:none;">No data this month</div>
+    </div>
+
+</div>
+
+<!-- CATEGORY BREAKDOWN TABLE -->
+<div class="chart-card" style="margin-bottom:25px;">
+    <h3>📂 Category Breakdown</h3>
+    <table class="cat-table">
+        <thead><tr><th>Category</th><th>Amount</th><th>Transactions</th><th>% of Total</th></tr></thead>
+        <tbody id="catTableBody"></tbody>
+    </table>
+    <div id="catTableEmpty" class="no-data" style="display:none;">No expenses this month yet</div>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+let pieChartInstance  = null;
+let barChartInstance  = null;
+let lineChartInstance = null;
+
+const CATEGORY_KEYWORDS = [
+    { keywords: ["food","eat","restaurant","lunch","dinner","breakfast","snack","cafe","pizza","burger","biryani","chai"], icon: "🍔" },
+    { keywords: ["medical","doctor","medicine","hospital","health","pharmacy","clinic","dentist"], icon: "💊" },
+    { keywords: ["travel","trip","flight","hotel","tour","vacation","holiday","airbnb"], icon: "✈️" },
+    { keywords: ["transport","cab","uber","ola","bus","train","petrol","fuel","auto","metro","rapido"], icon: "🚗" },
+    { keywords: ["shop","cloth","dress","amazon","flipkart","mall","fashion","apparel","meesho"], icon: "🛍️" },
+    { keywords: ["rent","house","home","electricity","water","bill","maintenance","wifi","internet","gas"], icon: "🏠" },
+    { keywords: ["entertainment","movie","netflix","game","club","party","concert","sport","gym"], icon: "🎬" },
+    { keywords: ["education","course","book","school","college","fee","tuition","exam","coaching"], icon: "📚" },
+    { keywords: ["grocery","vegetable","fruit","supermarket","daily","kirana","bazar"], icon: "🛒" },
+    { keywords: ["salary","income","freelance","bonus","payment"], icon: "💵" },
+];
+function getCategoryIcon(cat) {
+    const lower = (cat || "").toLowerCase();
+    for (const g of CATEGORY_KEYWORDS) {
+        if (g.keywords.some(k => lower.includes(k))) return g.icon;
+    }
+    return "📌";
+}
+
+const COLORS = ["#667eea","#43cea2","#f7971e","#e05c97","#185a9d","#cd600c","#764ba2","#00b09b","#ff6b6b","#feca57"];
+
+// Init month picker to current month
+function initMonthPicker() {
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm   = String(now.getMonth() + 1).padStart(2, "0");
+    document.getElementById("selectedMonth").value = `${yyyy}-${mm}`;
+}
+
+function updatePageLabel(year, monthIndex) {
+    const label = new Date(year, monthIndex, 1)
+        .toLocaleString("default", { month: "long", year: "numeric" });
+    document.getElementById("pageMonthLabel").textContent = label;
+}
+
+async function loadDashboard() {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "index.html"; return; }
+
+    const val = document.getElementById("selectedMonth").value;
+    const [year, month] = val.split("-").map(Number);
+    updatePageLabel(year, month - 1);
+
+    try {
+        const res = await fetch(`${API_BASE}/expenses`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) { alert("Error fetching expenses"); return; }
+        const all = await res.json();
+
+        // Filter to selected month
+        const expenses = all.filter(exp => {
+            if (!exp.date) return false;
+            const d = new Date(exp.date);
+            return d.getFullYear() === year && d.getMonth() === month - 1;
+        });
+
+        renderStats(expenses);
+        renderPieChart(expenses);
+        renderBarChart(expenses);
+        renderLineChart(expenses, year, month);
+        renderCatTable(expenses);
+
+    } catch (err) { console.error(err); }
+}
+
+function renderStats(expenses) {
+    const total = expenses.reduce((s, e) => s + e.amount, 0);
+    const count = expenses.length;
+    const avg   = count > 0 ? total / count : 0;
+
+    document.getElementById("statTotal").textContent = total.toFixed(2);
+    document.getElementById("statCount").textContent = count;
+    document.getElementById("statAvg").textContent   = avg.toFixed(2);
+
+    const catMap = {};
+    expenses.forEach(e => { catMap[e.category] = (catMap[e.category] || 0) + e.amount; });
+    const top = Object.entries(catMap).sort((a,b) => b[1]-a[1])[0];
+    document.getElementById("statTop").textContent = top ? `${getCategoryIcon(top[0])} ${top[0]}` : "—";
+}
+
+function getCatMap(expenses) {
+    const catMap = {};
+    expenses.forEach(e => {
+        catMap[e.category] = catMap[e.category] || { amount: 0, count: 0 };
+        catMap[e.category].amount += e.amount;
+        catMap[e.category].count  += 1;
+    });
+    return Object.entries(catMap).sort((a,b) => b[1].amount - a[1].amount);
+}
+
+function renderPieChart(expenses) {
+    const canvas = document.getElementById("pieChart");
+    const empty  = document.getElementById("pieEmpty");
+    if (pieChartInstance) { pieChartInstance.destroy(); pieChartInstance = null; }
+
+    const cats = getCatMap(expenses);
+    if (cats.length === 0) { canvas.style.display="none"; empty.style.display="block"; return; }
+    canvas.style.display="block"; empty.style.display="none";
+
+    pieChartInstance = new Chart(canvas, {
+        type: "doughnut",
+        data: {
+            labels: cats.map(([cat]) => `${getCategoryIcon(cat)} ${cat}`),
+            datasets: [{ data: cats.map(([,v]) => v.amount.toFixed(2)), backgroundColor: COLORS, borderWidth: 2 }]
+        },
+        options: { plugins: { legend: { position: "bottom" } }, responsive: true }
+    });
+}
+
+function renderBarChart(expenses) {
+    const canvas = document.getElementById("barChart");
+    const empty  = document.getElementById("barEmpty");
+    if (barChartInstance) { barChartInstance.destroy(); barChartInstance = null; }
+
+    const cats = getCatMap(expenses);
+    if (cats.length === 0) { canvas.style.display="none"; empty.style.display="block"; return; }
+    canvas.style.display="block"; empty.style.display="none";
+
+    barChartInstance = new Chart(canvas, {
+        type: "bar",
+        data: {
+            labels: cats.map(([cat]) => `${getCategoryIcon(cat)} ${cat}`),
+            datasets: [{
+                label: "Amount (₹)",
+                data: cats.map(([,v]) => v.amount.toFixed(2)),
+                backgroundColor: COLORS,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } },
+            responsive: true
+        }
+    });
+}
+
+function renderLineChart(expenses, year, month) {
+    const canvas = document.getElementById("lineChart");
+    const empty  = document.getElementById("lineEmpty");
+    if (lineChartInstance) { lineChartInstance.destroy(); lineChartInstance = null; }
+
+    if (expenses.length === 0) { canvas.style.display="none"; empty.style.display="block"; return; }
+    canvas.style.display="block"; empty.style.display="none";
+
+    // Build daily totals for the month
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const dailyMap = {};
+    expenses.forEach(e => {
+        const day = parseInt(e.date.split("-")[2]);
+        dailyMap[day] = (dailyMap[day] || 0) + e.amount;
+    });
+
+    const labels = Array.from({length: daysInMonth}, (_, i) => i + 1);
+    const data   = labels.map(d => (dailyMap[d] || 0).toFixed(2));
+
+    lineChartInstance = new Chart(canvas, {
+        type: "line",
+        data: {
+            labels: labels.map(d => `${d}`),
+            datasets: [{
+                label: "Daily Spending (₹)",
+                data,
+                borderColor: "#667eea",
+                backgroundColor: "rgba(102,126,234,0.15)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 4,
+                pointBackgroundColor: "#667eea"
+            }]
+        },
+        options: {
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { display: false } },
+            responsive: true
+        }
+    });
+}
+
+function renderCatTable(expenses) {
+    const tbody = document.getElementById("catTableBody");
+    const empty = document.getElementById("catTableEmpty");
+    tbody.innerHTML = "";
+
+    const cats  = getCatMap(expenses);
+    const total = expenses.reduce((s,e) => s + e.amount, 0);
+
+    if (cats.length === 0) { empty.style.display="block"; return; }
+    empty.style.display="none";
+
+    cats.forEach(([cat, val]) => {
+        const pct = total > 0 ? ((val.amount / total) * 100).toFixed(1) : 0;
+        const tr  = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${getCategoryIcon(cat)} ${cat}</td>
+            <td>₹${val.amount.toFixed(2)}</td>
+            <td>${val.count}</td>
+            <td>${pct}%</td>`;
+        tbody.appendChild(tr);
+    });
+}
+
+// On load
+window.addEventListener("load", function() {
+    const token = localStorage.getItem("access_token");
+    if (!token) { window.location.href = "index.html"; return; }
+    initMonthPicker();
+    loadDashboard();
+});
+</script>
+</body>
+</html>

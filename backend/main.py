@@ -39,6 +39,11 @@ if not os.path.exists(frontend_path):
 def serve_index():
     return FileResponse(os.path.join(frontend_path, "index.html"), media_type="text/html")
 
+
+@app.get("/dashboard.html")
+def serve_dashboard():
+    return FileResponse(os.path.join(frontend_path, "dashboard.html"), media_type="text/html")
+
 # Mount static files for CSS, JS, etc.
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
@@ -155,3 +160,9 @@ def update_expense(
     db.commit()
     db.refresh(expense)
     return expense
+
+
+#to view the expenses  in the dashboard
+@app.get("/dashboard.html")
+def serve_dashboard():
+    return FileResponse(os.path.join(frontend_path, "dashboard.html"), media_type="text/html")
