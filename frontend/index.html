@@ -32,7 +32,7 @@
         .cancel-btn { background: #6c757d; color: white; }
         .delete-btn { background: #dc3545; color: white; }
         .edit-btn   { background: #ffc107; color: #333; }
-        .reset-btn  {background: linear-gradient(45deg, #667eea, #764ba2) ; color: white; transition: 0.3s; }
+        .reset-btn  { background: linear-gradient(45deg, #667eea, #764ba2); color: white; transition: 0.3s; }
         .reset-btn:hover { background: #5a6268; transform: scale(1.05); }
 
 
@@ -44,9 +44,13 @@
         .empty { text-align: center; color: gray; margin-top: 15px; }
         .month-group-header td { background: #3a3060; color: white; font-weight: bold; font-size: 13px; padding: 8px 12px; letter-spacing: 0.5px; text-align: left; }
 
-        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .filter-box { display: flex; gap: 10px; align-items: center; }
-        .filter-box input { width: 200px; }
+        .table-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+        .filter-box { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        .filter-box input[type="text"] { width: 180px; }
+        .filter-box input[type="date"] { width: 150px; }
+        .filter-divider { width: 1px; background: #ccc; height: 30px; }
+        .filter-label { font-size: 12px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; }
+        .active-filter-badge { background: #667eea; color: white; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: bold; }
 
         /* AUTH */
         .auth-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 400px; margin: 40px auto; }
@@ -78,7 +82,7 @@
             Total Spent
             ₹ <span id="totalAmount">0.00</span>
         </div>
-        <a href="dashboard.html" class="dashboard-nav-btn">📊 View Expense Dashboard</a>
+        <a href="dashboard.html" class="dashboard-nav-btn">📊 View Expennse Dashboard</a>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
@@ -107,9 +111,19 @@
             <div class="table-header">
                 <h2>Your Expenses</h2>
                 <div class="filter-box">
-                    <input type="text" id="filterCategory" placeholder="Filter by category">
-                    <button class="primary-btn" onclick="filterExpenses()">Filter</button>
-                    <button class="reset-btn"   onclick="resetFilter()">Reset</button>
+                    <span class="filter-label">Category:</span>
+                    <input type="text" id="filterCategory" placeholder="e.g. Food, Travel">
+                    <div class="filter-divider"></div>
+                    <span class="filter-label">From:</span>
+                    <input type="date" id="filterStartDate">
+                    <span class="filter-label">To:</span>
+                    <input type="date" id="filterEndDate">
+                    <div class="filter-divider"></div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button class="primary-btn" onclick="filterExpenses()">Apply</button>
+                        <button class="reset-btn" onclick="resetFilter()">Reset</button>
+                        <span id="filterBadge" style="display:none;" class="active-filter-badge">Filtered</span>
+                    </div>
                 </div>
             </div>
             <table>
@@ -160,7 +174,7 @@
 <script>
 const API_BASE = "http://127.0.0.1:8000";
 
-// ── CATEGORY ICONS ─────────────────────────────────────────────
+// ── CATEGORY ICONS ───
 const CATEGORY_KEYWORDS = [
     { keywords: ["food","eat","restaurant","lunch","dinner","breakfast","snack","cafe","pizza","burger","biryani","chai"], icon: "🍔" },
     { keywords: ["medical","doctor","medicine","hospital","health","pharmacy","clinic","dentist"],                        icon: "💊" },
@@ -182,7 +196,7 @@ function getCategoryIcon(cat) {
     return "📌";
 }
 
-// ── AUTH ───────────────────────────────────────────────────────
+// ── AUTH ─────
 function logout() {
     localStorage.removeItem("access_token");
     localStorage.removeItem("username");
@@ -272,7 +286,7 @@ window.addEventListener("load", function () {
     else showAuth();
 });
 
-// ── EXPENSES ───────────────────────────────────────────────────
+// ── EXPENSES ──
 function getToken() { return localStorage.getItem("access_token"); }
 
 async function loadExpenses() {
@@ -318,7 +332,7 @@ function displayExpenses(expenses) {
             : "No Date";
         const headerRow = document.createElement("tr");
         headerRow.className = "month-group-header";
-        headerRow.innerHTML = `<td colspan="6">📅 ${label} &nbsp;—&nbsp; ${exps.length} expense(s)</td>`;
+        headerRow.innerHTML = `<td colspan="6">📅 ${label}</td>`;
         tableBody.appendChild(headerRow);
 
         exps.forEach(exp => {
@@ -406,44 +420,90 @@ function clearForm() {
 function cancelEdit() { clearForm(); }
 
 function resetFilter() {
-    document.getElementById("filterCategory").value = "";
+    document.getElementById("filterCategory").value  = "";
+    document.getElementById("filterStartDate").value = "";
+    document.getElementById("filterEndDate").value   = "";
+    document.getElementById("filterBadge").style.display = "none";
     loadExpenses();
 }
 
 async function filterExpenses() {
-    const filter = document.getElementById("filterCategory").value.trim().toLowerCase();
-    if (!filter) { loadExpenses(); return; }
+    const category  = document.getElementById("filterCategory").value.trim().toLowerCase();
+    const startDate = document.getElementById("filterStartDate").value;
+    const endDate   = document.getElementById("filterEndDate").value;
+
+    // If nothing is filled, just load all
+    if (!category && !startDate && !endDate) { loadExpenses(); return; }
+
+    // Validate date range
+    if (startDate && endDate && startDate > endDate) {
+        alert("Start date cannot be after end date.");
+        return;
+    }
+
     try {
         const res = await fetch(`${API_BASE}/expenses`, {
             headers: { "Authorization": `Bearer ${getToken()}` }
         });
         if (!res.ok) { alert("Error fetching expenses"); return; }
-        const all      = await res.json();
-        const filtered = all.filter(e => e.category.toLowerCase().includes(filter));
+        const all = await res.json();
+
+        const filtered = all.filter(exp => {
+            const matchCat   = category  ? exp.category.toLowerCase().includes(category) : true;
+            const matchStart = startDate ? exp.date >= startDate : true;
+            const matchEnd   = endDate   ? exp.date <= endDate   : true;
+            return matchCat && matchStart && matchEnd;
+        });
+
+        // Show filter badge
+        document.getElementById("filterBadge").style.display = "inline-block";
 
         const tableBody  = document.getElementById("expenseTable");
         const emptyState = document.getElementById("emptyState");
         tableBody.innerHTML = "";
+
         if (filtered.length === 0) {
             emptyState.style.display = "block";
+            emptyState.textContent   = "No expenses found for the selected filters.";
             document.getElementById("totalAmount").textContent = "0.00";
             return;
         }
         emptyState.style.display = "none";
-        let total = 0;
+        emptyState.textContent   = "No expenses found";
+
+        // Group filtered expenses by month, newest first
+        const groups = {};
         filtered.forEach(exp => {
-            total += exp.amount;
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${exp.title}</td>
-                <td>₹${exp.amount.toFixed(2)}</td>
-                <td>${getCategoryIcon(exp.category)} ${exp.category}</td>
-                <td>${exp.date}</td>
-                <td>
-                    <button class="edit-btn"   onclick="editExpense(${exp.id},'${exp.title}',${exp.amount},'${exp.category}','${exp.date}')">✏️ Edit</button>
-                    <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️ Delete</button>
-                </td>`;
-            tableBody.appendChild(row);
+            const key = exp.date ? exp.date.substring(0, 7) : "No Date";
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(exp);
+        });
+        const sortedGroups = Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
+
+        let total = 0;
+        sortedGroups.forEach(([monthKey, exps]) => {
+            const label = monthKey !== "No Date"
+                ? new Date(monthKey + "-01").toLocaleString("default", { month: "long", year: "numeric" })
+                : "No Date";
+            const headerRow = document.createElement("tr");
+            headerRow.className = "month-group-header";
+            headerRow.innerHTML = `<td colspan="5">📅 ${label}</td>`;
+            tableBody.appendChild(headerRow);
+
+            exps.forEach(exp => {
+                total += exp.amount;
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${exp.title}</td>
+                    <td>₹${exp.amount.toFixed(2)}</td>
+                    <td>${getCategoryIcon(exp.category)} ${exp.category}</td>
+                    <td>${exp.date}</td>
+                    <td>
+                        <button class="edit-btn"   onclick="editExpense(${exp.id},'${exp.title}',${exp.amount},'${exp.category}','${exp.date}')">✏️ Edit</button>
+                        <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️ Delete</button>
+                    </td>`;
+                tableBody.appendChild(row);
+            });
         });
         document.getElementById("totalAmount").textContent = total.toFixed(2);
     } catch (err) { console.error(err); }

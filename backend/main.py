@@ -46,7 +46,7 @@ def serve_dashboard():
 
 # Mount static files for CSS, JS, etc.
 app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-
+ 
 
 
 # REGISTER
