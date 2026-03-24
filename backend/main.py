@@ -1,24 +1,35 @@
 import os
-from fastapi import FastAPI, Depends, HTTPException
+import shutil
+import time
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import date
-from database import Base 
-from database import engine, get_db
-from models import Base, Expense, User
-from schemas import ExpenseCreate, ExpenseUpdate, ExpenseResponse, UserCreate, UserResponse, Token
-from auth import hash_password, verify_password, create_access_token, get_current_user
+from database import Base, engine, get_db, async_engine, get_async_session
+from models import User, Expense
+from schemas import (
+    UserRead, UserCreate, UserUpdate,
+    ExpenseCreate, ExpenseUpdate, ExpenseResponse,
+    ProfileUpdate, CurrencyUpdate, PasswordChange
+)
+from auth import fastapi_users, auth_backend, current_active_user
+from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users.password import PasswordHelper
 
-# APP INITIALIZATION
+#  APP
 app = FastAPI(title="Expense Tracker API")
 
-Base.metadata.create_all(bind=engine)  # Create tables if they don't exist
+# CREATE TABLES
+@app.on_event("startup")
+async def startup():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
-# CORS CONFIG
+# CORS 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -27,72 +38,170 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# STATIC FILES
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+#Paths
+BASE_DIR      = os.path.dirname(os.path.abspath(__file__))
 frontend_path = os.path.abspath(os.path.join(BASE_DIR, "..", "frontend"))
+UPLOAD_DIR    = os.path.join(frontend_path, "uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-if not os.path.exists(frontend_path):
-    raise RuntimeError(f"Frontend directory not found at {frontend_path}")
+# ── AUTH ROUTES (FastAPI Users) ────────────────────────────────
+# POST /auth/jwt/login       → Login, returns JWT token
+# POST /auth/jwt/logout      → Logout
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix="/auth/jwt",
+    tags=["auth"]
+)
 
-# SERVE FRONTEND FILES (Must be at the end after all API routes)
+# POST /auth/register        → Register new user
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix="/auth",
+    tags=["auth"]
+)
+
+# POST /auth/forgot-password → Send reset email
+# POST /auth/reset-password  → Reset password with token
+app.include_router(
+    fastapi_users.get_reset_password_router(),
+    prefix="/auth",
+    tags=["auth"]
+)
+
+# POST /auth/request-verify-token → Send verification email
+# POST /auth/verify               → Verify email
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix="/auth",
+    tags=["auth"]
+)
+
+# GET  /users/me             → Get current user profile
+# PATCH /users/me            → Update profile
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix="/users",
+    tags=["users"]
+)
+
+
+# ── SERVE PAGES 
 @app.get("/")
 def serve_index():
     return FileResponse(os.path.join(frontend_path, "index.html"), media_type="text/html")
-
 
 @app.get("/dashboard.html")
 def serve_dashboard():
     return FileResponse(os.path.join(frontend_path, "dashboard.html"), media_type="text/html")
 
-# Mount static files for CSS, JS, etc.
-app.mount("/static", StaticFiles(directory=frontend_path), name="static")
- 
+@app.get("/profile.html")
+def serve_profile_page():
+    return FileResponse(os.path.join(frontend_path, "profile.html"), media_type="text/html")
+
+@app.get("/reset-password.html")
+def serve_reset():
+    return FileResponse(os.path.join(frontend_path, "reset-password.html"), media_type="text/html")
 
 
-# REGISTER
-@app.post("/register", response_model=UserResponse)
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.username == user.username).first():
-        raise HTTPException(status_code=400, detail="Username already exists")
-    
-    if db.query(User).filter(User.email == user.email).first():
-        raise HTTPException(status_code=400, detail="Email already exists")
-
-    new_user = User(
-        username=user.username,
-        email=user.email,
-        password=hash_password(user.password)
-    )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return new_user
+# PROFILE — GET 
+@app.get("/profile", response_model=UserRead)
+async def get_profile(current_user: User = Depends(current_active_user)):
+    return current_user
 
 
-# LOGIN
-@app.post("/login", response_model=Token)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+# PROFILE — UPDATE USERNAME & EMAIL 
+@app.put("/profile", response_model=UserRead)
+async def update_profile(
+    data: ProfileUpdate,
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
 ):
-    user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
+    if data.username and data.username != current_user.username:
+        current_user.username = data.username
+    if data.email and data.email != current_user.email:
+        current_user.email = data.email
+    await session.commit()
+    await session.refresh(current_user)
+    return current_user
 
-    token = create_access_token(data={"sub": user.username})
-    return {"access_token": token, "token_type": "bearer"}
+
+# ── PROFILE — CHANGE PASSWORD
+@app.put("/profile/password")
+async def change_password(
+    data: PasswordChange,
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    pwd_helper = PasswordHelper()
+    verified, _ = pwd_helper.verify_and_update(data.current_password, current_user.hashed_password)
+    if not verified:
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+    if len(data.new_password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    current_user.hashed_password = pwd_helper.hash(data.new_password)
+    await session.commit()
+    return {"message": "Password changed successfully"}
 
 
-# CREATE EXPENSE
+# ── PROFILE — UPLOAD PICTURE
+@app.post("/profile/picture")
+async def upload_picture(
+    file: UploadFile = File(...),
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    allowed = ["image/jpeg", "image/png", "image/jpg", "image/webp"]
+    if file.content_type not in allowed:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG and WebP images are allowed")
+    ext       = file.filename.split(".")[-1]
+    filename  = f"user_{current_user.id}.{ext}"
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    current_user.profile_picture = f"/uploads/{filename}"
+    await session.commit()
+    return {"picture_url": current_user.profile_picture}
+
+
+# ── PROFILE — REMOVE PICTURE 
+@app.delete("/profile/picture")
+async def remove_picture(
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    if current_user.profile_picture:
+        file_path = os.path.join(UPLOAD_DIR, os.path.basename(current_user.profile_picture.split("?")[0]))
+        if os.path.exists(file_path):
+            os.remove(file_path)
+    current_user.profile_picture = None
+    await session.commit()
+    return {"message": "Profile picture removed successfully"}
+
+
+# ── PROFILE — CURRENCY 
+@app.put("/profile/currency")
+async def update_currency(
+    data: CurrencyUpdate,
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    allowed = ["₹", "$", "€", "£", "¥"]
+    if data.currency not in allowed:
+        raise HTTPException(status_code=400, detail="Invalid currency")
+    current_user.currency = data.currency
+    await session.commit()
+    return {"message": "Currency updated", "currency": current_user.currency}
+
+
+# EXPENSES — CREATE
 @app.post("/expenses", response_model=ExpenseResponse)
 def create_expense(
     expense: ExpenseCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(current_active_user)
 ):
     new_expense = Expense(
-        title=expense.title,
-        amount=expense.amount,
+        title=expense.title, amount=expense.amount,
         category=expense.category,
         date=expense.date if expense.date else date.today(),
         user_id=current_user.id
@@ -103,66 +212,56 @@ def create_expense(
     return new_expense
 
 
-# GET ALL EXPENSES
+# EXPENSES — GET ALL
 @app.get("/expenses", response_model=List[ExpenseResponse])
 def get_expenses(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(current_active_user)
 ):
     return db.query(Expense).filter(Expense.user_id == current_user.id).all()
 
 
-# DELETE EXPENSE
-@app.delete("/expenses/{expense_id}")
-def delete_expense(
-    expense_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    expense = db.query(Expense).filter(
-        Expense.id == expense_id,
-        Expense.user_id == current_user.id
-    ).first()
-
-    if not expense:
-        raise HTTPException(status_code=404, detail="Expense not found")
-
-    db.delete(expense)
-    db.commit()
-    return {"message": "Expense deleted successfully"}
-
-
-# UPDATE EXPENSE
+# EXPENSES UPDATE 
 @app.put("/expenses/{expense_id}", response_model=ExpenseResponse)
 def update_expense(
     expense_id: int,
     updated: ExpenseUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(current_active_user)
 ):
     expense = db.query(Expense).filter(
         Expense.id == expense_id,
         Expense.user_id == current_user.id
     ).first()
-
     if not expense:
         raise HTTPException(status_code=404, detail="Expense not found")
-
-    if updated.title is not None:
-        expense.title = updated.title
-    if updated.amount is not None:
-        expense.amount = updated.amount
-    if updated.category is not None:
-        expense.category = updated.category
-    if updated.date is not None:
-        expense.date = updated.date
-
+    if updated.title    is not None: expense.title    = updated.title
+    if updated.amount   is not None: expense.amount   = updated.amount
+    if updated.category is not None: expense.category = updated.category
+    if updated.date     is not None: expense.date     = updated.date
     db.commit()
     db.refresh(expense)
     return expense
 
 
-#to view the expenses  in the dashboard
-@app.get("/dashboard.html")
-def serve_dashboard():
-    return FileResponse(os.path.join(frontend_path, "dashboard.html"), media_type="text/html")
+# EXPENSES — DELETE
+@app.delete("/expenses/{expense_id}")
+def delete_expense(
+    expense_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(current_active_user)
+):
+    expense = db.query(Expense).filter(
+        Expense.id == expense_id,
+        Expense.user_id == current_user.id
+    ).first()
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+    db.delete(expense)
+    db.commit()
+    return {"message": "Expense deleted successfully"}
+
+
+# ── STATIC FILES — must be last ───────────────────────────────
+app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR),    name="uploads")
+app.mount("/static",  StaticFiles(directory=frontend_path), name="static")

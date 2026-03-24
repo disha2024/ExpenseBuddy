@@ -1,58 +1,63 @@
-from datetime import datetime, timedelta
-from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
-from database import get_db
+from typing import Optional
+from fastapi import Depends, Request
+from fastapi_users import BaseUserManager, FastAPIUsers, IntegerIDMixin
+from fastapi_users.authentication import (
+    AuthenticationBackend,
+    BearerTransport,
+    JWTStrategy,
+)
+from fastapi_users.db import SQLAlchemyUserDatabase
+from sqlalchemy.ext.asyncio import AsyncSession
+from database import get_async_session
 from models import User
 
-
-# CONFIG
-SECRET_KEY = "changethis123secret999key"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+# ── CONFIG ─────────────────────────────────────────────────────
+SECRET         = "changethis123secret999key"
+TOKEN_LIFETIME = 60 * 60 * 24  # 24 hours in seconds
 
 
-#PASSWORD UTILS
-def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
-
-def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+# ── USER DATABASE ──────────────────────────────────────────────
+async def get_user_db(session: AsyncSession = Depends(get_async_session)):
+    yield SQLAlchemyUserDatabase(session, User)
 
 
-# TOKEN UTILS
-def create_access_token(data: dict) -> str:
-    to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+# ── USER MANAGER ──────────────────────────────────────────────
+class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
+    reset_password_token_secret    = SECRET
+    verification_token_secret      = SECRET
+
+    async def on_after_register(self, user: User, request: Optional[Request] = None):
+        print(f"✅ New user registered: {user.email}")
+
+    async def on_after_forgot_password(self, user: User, token: str, request: Optional[Request] = None):
+        print(f"📧 Password reset token for {user.email}: {token}")
+
+    async def on_after_request_verify(self, user: User, token: str, request: Optional[Request] = None):
+        print(f"📧 Verification token for {user.email}: {token}")
 
 
-# CURRENT USER
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid or expired token. Please log in again.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
+async def get_user_manager(user_db=Depends(get_user_db)):
+    yield UserManager(user_db)
 
-    user = db.query(User).filter(User.username == username).first()
-    if user is None:
-        raise credentials_exception
 
-    return user
+# ── JWT AUTH BACKEND ───────────────────────────────────────────
+bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
+
+def get_jwt_strategy() -> JWTStrategy:
+    return JWTStrategy(secret=SECRET, lifetime_seconds=TOKEN_LIFETIME)
+
+auth_backend = AuthenticationBackend(
+    name="jwt",
+    transport=bearer_transport,
+    get_strategy=get_jwt_strategy,
+)
+
+# ── FASTAPI USERS INSTANCE ─────────────────────────────────────
+fastapi_users = FastAPIUsers[User, int](
+    get_user_manager,
+    [auth_backend],
+)
+
+# ── CURRENT USER HELPERS ───────────────────────────────────────
+current_active_user          = fastapi_users.current_user(active=True)
+current_active_verified_user = fastapi_users.current_user(active=True, verified=True)

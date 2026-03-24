@@ -1,44 +1,66 @@
+from fastapi_users import schemas as fu_schemas
 from pydantic import BaseModel, Field
-from datetime import date as date_type
-from typing import Union
+from datetime import date as date_type, datetime
+from typing import Optional, Union
 
 
-# USER SCHEMAS
-class UserCreate(BaseModel):
+# ── USER SCHEMAS (FastAPI Users)
+class UserRead(fu_schemas.BaseUser[int]):
+    username:        str
+    profile_picture: Optional[str]      = None
+    currency:        Optional[str]      = "₹"
+    created_at:      Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class UserCreate(fu_schemas.BaseUserCreate):
     username: str
-    email: str
-    password: str
 
-class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: str
+class UserUpdate(fu_schemas.BaseUserUpdate):
+    username:        Optional[str] = None
+    profile_picture: Optional[str] = None
+    currency:        Optional[str] = None
 
-    model_config = {"from_attributes": True}
 
+# ── TOKEN SCHEMA 
 class Token(BaseModel):
     access_token: str
-    token_type: str
+    token_type:   str
 
 
-# EXPENSE SCHEMAS
+# ── PROFILE SCHEMAS 
+class ProfileUpdate(BaseModel):
+    username: Optional[str] = None
+    email:    Optional[str] = None
+
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password:     str
+
+class CurrencyUpdate(BaseModel):
+    currency: str
+
+
+# ── EXPENSE SCHEMAS 
 class ExpenseCreate(BaseModel):
-    title: str
-    amount: float = Field(gt=0)
+    title:    str
+    amount:   float = Field(gt=0)
     category: str
-    date: Union[date_type, None] = None
+    date:     Union[date_type, None] = None
 
 class ExpenseUpdate(BaseModel):
-    title: Union[str, None] = None
-    amount: Union[float, None] = Field(default=None, gt=0)
-    category: Union[str, None] = None
-    date: Union[date_type, None] = None
+    title:    Union[str,   None] = None
+    amount:   Union[float, None] = Field(default=None, gt=0)
+    category: Union[str,   None] = None
+    date:     Union[date_type, None] = None
 
 class ExpenseResponse(BaseModel):
-    id: int
-    title: str
-    amount: float
+    id:       int
+    title:    str
+    amount:   float
     category: str
-    date: Union[date_type, None] = None
+    date:     Union[date_type, None] = None
 
-    model_config = {"from_attributes": True}
+    class Config:
+        from_attributes = True

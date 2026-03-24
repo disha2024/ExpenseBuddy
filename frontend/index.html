@@ -10,7 +10,11 @@
 
         /* SIDEBAR */
         .sidebar { width: 280px; background: #14131f; color: white; padding: 30px 20px; min-height: 100vh; display: flex; flex-direction: column; }
-        .sidebar h2 { margin-bottom: 30px; text-align: center; }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .sidebar h2 { text-align: center; margin: 0; font-size: 18px; }
+        .profile-icon-btn { display: inline-block; text-decoration: none; flex-shrink: 0; }
+        .sidebar-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #667eea; transition: 0.3s; cursor: pointer; }
+        .sidebar-avatar:hover { border-color: #43cea2; transform: scale(1.1); }
         .total-box { background: linear-gradient(45deg, #43cea2, #185a9d); padding: 25px; border-radius: 15px; text-align: center; font-size: 20px; font-weight: bold; }
         .total-box span { display: block; font-size: 28px; margin-top: 10px; }
         .dashboard-nav-btn { display: block; width: 100%; margin-top: 20px; padding: 10px; background: linear-gradient(45deg, #43cea2, #185a9d); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; box-sizing: border-box; }
@@ -52,6 +56,12 @@
         .filter-label { font-size: 12px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; }
         .active-filter-badge { background: #667eea; color: white; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: bold; }
 
+        /* PASSWORD EYE TOGGLE */
+        .pwd-wrap { position:relative; display:block; }
+        .pwd-wrap input { padding-right:40px !important; width:100% !important; background:white !important; color:#333 !important; font-size:14px !important; font-weight:normal !important; transform:none !important; box-shadow:none !important; }
+        .eye-btn { position:absolute !important; right:12px !important; top:50% !important; transform:translateY(-50%) !important; background:none !important; border:none !important; cursor:pointer !important; font-size:16px !important; color:#888 !important; padding:0 !important; margin:0 !important; line-height:1 !important; width:auto !important; box-shadow:none !important; }
+        .eye-btn:hover { color:#667eea !important; transform:translateY(-50%) !important; }
+
         /* AUTH */
         .auth-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 400px; margin: 40px auto; }
         .auth-container h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 28px; }
@@ -77,12 +87,17 @@
 
     <!-- SIDEBAR -->
     <div class="sidebar">
-        <h2>💰 ExpenseBuddy</h2>
+        <div class="sidebar-header">
+            <h2>💰 ExpenseBuddy</h2>
+            <a href="profile.html" class="profile-icon-btn" id="profileIconBtn" title="My Profile">
+                <img id="sidebarAvatar" src="https://ui-avatars.com/api/?name=U&background=667eea&color=fff&size=40" id="sidebarAvatar" class="sidebar-avatar">
+            </a>
+        </div>
         <div class="total-box">
             Total Spent
-            ₹ <span id="totalAmount">0.00</span>
+            <span id="currencySymbol">₹</span> <span id="totalAmount">0.00</span>
         </div>
-        <a href="dashboard.html" class="dashboard-nav-btn">📊 View Expennse Dashboard</a>
+        <a href="dashboard.html" class="dashboard-nav-btn">📊 View Dashboard</a>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
@@ -147,14 +162,18 @@
         <h1>🔐 Login</h1>
         <div id="loginMessage"></div>
         <div class="form-group">
-            <label>Username:</label>
-            <input type="text" id="loginUsername" placeholder="Enter your username">
+            <label>Enter your Registered Email:</label>
+            <input type="email" id="loginUsername" placeholder="Enter your email">
         </div>
         <div class="form-group">
             <label>Password:</label>
-            <input type="password" id="loginPassword" placeholder="Enter your password">
+            <div class="pwd-wrap">
+                <input type="password" id="loginPassword" placeholder="Enter your password">
+                <button class="eye-btn" type="button" onclick="togglePwd('loginPassword', this)">👁️</button>
+            </div>
         </div>
         <button onclick="handleLogin()">Login</button>
+        <div class="toggle-text"><a onclick="showForgotForm()">Forgot Password?</a></div>
         <div class="toggle-text">Don't have an account? <a onclick="toggleForm()">Register here</a></div>
     </div>
     <!-- REGISTER -->
@@ -163,10 +182,36 @@
         <div id="registerMessage"></div>
         <div class="form-group"><label>Username:</label><input type="text" id="registerUsername" placeholder="Choose a username"></div>
         <div class="form-group"><label>Email:</label><input type="email" id="registerEmail" placeholder="Enter your email"></div>
-        <div class="form-group"><label>Password:</label><input type="password" id="registerPassword" placeholder="Choose a password"></div>
-        <div class="form-group"><label>Confirm Password:</label><input type="password" id="confirmPassword" placeholder="Confirm your password"></div>
+        <div class="form-group">
+            <label>Password:</label>
+            <div class="pwd-wrap">
+                <input type="password" id="registerPassword" placeholder="Choose a password">
+                <button class="eye-btn" type="button" onclick="togglePwd('registerPassword', this)">👁️</button>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Confirm Password:</label>
+            <div class="pwd-wrap">
+                <input type="password" id="confirmPassword" placeholder="Confirm your password">
+                <button class="eye-btn" type="button" onclick="togglePwd('confirmPassword', this)">👁️</button>
+            </div>
+        </div>
         <button onclick="handleRegister()">Register</button>
         <div class="toggle-text">Already have an account? <a onclick="toggleForm()">Login here</a></div>
+    </div>
+
+    <!-- FORGOT PASSWORD FORM -->
+    <div id="forgotForm" style="display:none;">
+        <h1>🔑 Forgot Password</h1>
+        <div id="forgotMessage"></div>
+        <div class="form-group">
+            <label>Email Address:</label>
+            <input type="email" id="forgotEmail" placeholder="Enter your registered email">
+        </div>
+        <button onclick="handleForgotPassword()">Send Reset Link</button>
+        <div class="toggle-text" style="margin-top:15px;">
+            <a onclick="showLoginForm()">← Back to Login</a>
+        </div>
     </div>
 </div>
 </div>
@@ -174,7 +219,7 @@
 <script>
 const API_BASE = "http://127.0.0.1:8000";
 
-// ── CATEGORY ICONS ───
+// ── CATEGORY ICONS ─────────────────────────────────────────────
 const CATEGORY_KEYWORDS = [
     { keywords: ["food","eat","restaurant","lunch","dinner","breakfast","snack","cafe","pizza","burger","biryani","chai"], icon: "🍔" },
     { keywords: ["medical","doctor","medicine","hospital","health","pharmacy","clinic","dentist"],                        icon: "💊" },
@@ -196,10 +241,17 @@ function getCategoryIcon(cat) {
     return "📌";
 }
 
-// ── AUTH ─────
-function logout() {
+// ── AUTH ───────────────────────────────────────────────────────
+async function logout() {
+    try {
+        await fetch(`${API_BASE}/auth/jwt/logout`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+    } catch(e) { console.log(e); }
     localStorage.removeItem("access_token");
     localStorage.removeItem("username");
+    localStorage.removeItem("currency");
     showAuth();
 }
 
@@ -225,30 +277,38 @@ function showAuth() {
 function showDashboard() {
     document.getElementById("authSection").style.display     = "none";
     document.getElementById("dashboardSection").style.display = "block";
+    updateCurrencySymbol();
+    loadSidebarProfile();
     loadExpenses();
 }
 
 function showMessage(el, msg, type) { el.textContent = msg; el.className = "message " + type; }
 
 async function handleLogin() {
-    const username = document.getElementById("loginUsername").value.trim();
+    const email    = document.getElementById("loginUsername").value.trim();
     const password = document.getElementById("loginPassword").value;
     const msgDiv   = document.getElementById("loginMessage");
-    if (!username || !password) { showMessage(msgDiv, "Please fill in all fields", "error"); return; }
+    if (!email || !password) { showMessage(msgDiv, "Please fill in all fields", "error"); return; }
     try {
+        // FastAPI Users OAuth2 login — "username" field must contain the email
         const fd = new FormData();
-        fd.append("username", username);
+        fd.append("username", email);   // FastAPI Users uses email as username
         fd.append("password", password);
-        const res = await fetch(`${API_BASE}/login`, { method: "POST", body: fd });
+        const res = await fetch(`${API_BASE}/auth/jwt/login`, { method: "POST", body: fd });
         if (res.ok) {
             const data = await res.json();
             localStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("username", username);
+            localStorage.setItem("email", email);
             showMessage(msgDiv, "Login successful!", "success");
             setTimeout(() => showDashboard(), 1000);
         } else {
             const err = await res.json();
-            showMessage(msgDiv, err.detail || "Login failed", "error");
+            // FastAPI Users returns "detail: LOGIN_BAD_CREDENTIALS"
+            if (err.detail === "LOGIN_BAD_CREDENTIALS") {
+                showMessage(msgDiv, "Invalid email or password", "error");
+            } else {
+                showMessage(msgDiv, err.detail || "Login failed", "error");
+            }
         }
     } catch { showMessage(msgDiv, "Server not reachable", "error"); }
 }
@@ -263,7 +323,7 @@ async function handleRegister() {
     if (password !== confirm) { showMessage(msgDiv, "Passwords do not match", "error"); return; }
     if (password.length < 6)  { showMessage(msgDiv, "Password must be at least 6 characters", "error"); return; }
     try {
-        const res = await fetch(`${API_BASE}/register`, {
+        const res = await fetch(`${API_BASE}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username, email, password })
@@ -286,8 +346,60 @@ window.addEventListener("load", function () {
     else showAuth();
 });
 
-// ── EXPENSES ──
+// Update sidebar avatar if profile picture was changed on profile page
+window.addEventListener("storage", function(e) {
+    if (e.key === "profilePicUpdated" && e.newValue) {
+        const avatar = document.getElementById("sidebarAvatar");
+        if (avatar) avatar.src = e.newValue;
+    }
+});
+
+// Reload sidebar profile fresh from API when returning from profile.html
+window.addEventListener("focus", function() {
+    if (getToken()) loadSidebarProfile();
+});
+
+// ── SIDEBAR PROFILE ───────────────────────────────────────────
+async function loadSidebarProfile() {
+    try {
+        const res = await fetch(`${API_BASE}/profile`, {
+            headers: { "Authorization": `Bearer ${getToken()}` }
+        });
+        if (!res.ok) return;
+        const user = await res.json();
+        const avatar = document.getElementById("sidebarAvatar");
+
+        // Always fetch fresh from API — never rely on localStorage for the image
+        if (user.profile_picture) {
+            avatar.src = API_BASE + user.profile_picture + "?t=" + Date.now();
+        } else {
+            avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=667eea&color=fff&size=40`;
+        }
+
+        // Sync currency
+        if (user.currency) {
+            localStorage.setItem("currency", user.currency);
+            updateCurrencySymbol();
+        }
+    } catch (err) { console.error(err); }
+}
+
+// ── EXPENSES ───
 function getToken() { return localStorage.getItem("access_token"); }
+
+// ── PASSWORD TOGGLE ───
+function togglePwd(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+    } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+    }
+}
+function getCurrency() { return localStorage.getItem("currency") || "₹"; }
+function updateCurrencySymbol() { document.getElementById("currencySymbol").textContent = getCurrency(); }
 
 async function loadExpenses() {
     try {
@@ -340,7 +452,7 @@ function displayExpenses(expenses) {
             const row = document.createElement("tr");
             row.innerHTML = `
                 <td>${exp.title}</td>
-                <td>₹${exp.amount.toFixed(2)}</td>
+                <td>${getCurrency()}${exp.amount.toFixed(2)}</td>
                 <td>${getCategoryIcon(exp.category)} ${exp.category}</td>
                 <td>${exp.date}</td>
                 <td>
@@ -351,7 +463,7 @@ function displayExpenses(expenses) {
         });
     });
 
-    document.getElementById("totalAmount").textContent = total.toFixed(2);
+    updateCurrencySymbol(); document.getElementById("totalAmount").textContent = total.toFixed(2);
 }
 
 async function saveExpense() {
@@ -505,9 +617,49 @@ async function filterExpenses() {
                 tableBody.appendChild(row);
             });
         });
-        document.getElementById("totalAmount").textContent = total.toFixed(2);
+        updateCurrencySymbol(); document.getElementById("totalAmount").textContent = total.toFixed(2);
     } catch (err) { console.error(err); }
 }
+// ── FORGOT PASSWORD ────────────────────────────────────────────
+function showForgotForm() {
+    document.getElementById("loginForm").style.display    = "none";
+    document.getElementById("registerForm").style.display = "none";
+    document.getElementById("forgotForm").style.display   = "block";
+    document.getElementById("forgotMessage").textContent  = "";
+    document.getElementById("forgotEmail").value          = "";
+}
+
+function showLoginForm() {
+    document.getElementById("loginForm").style.display    = "block";
+    document.getElementById("registerForm").style.display = "none";
+    document.getElementById("forgotForm").style.display   = "none";
+}
+
+async function handleForgotPassword() {
+    const email  = document.getElementById("forgotEmail").value.trim();
+    const msgDiv = document.getElementById("forgotMessage");
+
+    if (!email) {
+        msgDiv.textContent = "Please enter your email address";
+        msgDiv.className   = "message error";
+        return;
+    }
+
+    try {
+        const res  = await fetch(`${API_BASE}/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+        msgDiv.textContent = "✅ " + data.message;
+        msgDiv.className   = "message success";
+    } catch {
+        msgDiv.textContent = "Server not reachable. Please try again.";
+        msgDiv.className   = "message error";
+    }
+}
+
 </script>
 </body>
 </html>
