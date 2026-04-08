@@ -1,31 +1,24 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlmodel import create_engine, Session, SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine   # ✅ ADD THIS
 from typing import AsyncGenerator
+from models import User, Expense
 
-# ── SYNC (for regular routes) ──────────────────────────────────
-DATABASE_URL       = "mysql+pymysql://root:dishasql%402004@localhost:3306/expense_db"
-# ── ASYNC (required by FastAPI Users) ─────────────────────────
+DATABASE_URL = "mysql+pymysql://root:dishasql%402004@localhost:3306/expense_db"
 DATABASE_URL_ASYNC = "mysql+aiomysql://root:dishasql%402004@localhost:3306/expense_db"
 
-# Sync engine — used by expense routes
-engine       = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base         = declarative_base()
+engine = create_engine(DATABASE_URL)
 
-# Async engine — used by FastAPI Users
-async_engine         = create_async_engine(DATABASE_URL_ASYNC)
-AsyncSessionLocal    = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+# ✅ Now this will work
+async_engine = create_async_engine(DATABASE_URL_ASYNC)
 
-# ── SYNC DEPENDENCY ────────────────────────────────────────────
+def create_db_and_tables():
+    SQLModel.metadata.create_all(engine)
+
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    with Session(engine) as session:
+        yield session
 
-# ── ASYNC DEPENDENCY (for FastAPI Users) ──────────────────────
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
-    async with AsyncSessionLocal() as session:
+    async with AsyncSession(async_engine) as session:
         yield session

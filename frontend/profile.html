@@ -24,7 +24,7 @@
 
         /* PROFILE CARD */
         .profile-grid { display:grid; grid-template-columns:320px 1fr; gap:25px; }
-        .card { background:rgb(240,223,195); padding:25px; border-radius:15px; box-shadow:0 10px 30px rgba(219,107,2,0.169); margin-bottom:25px; }
+        .card { background:rgb(240,223,195); padding:25px; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.2); margin-bottom:25px; }
         .card h3 { margin-bottom:18px; color:#333; font-size:16px; border-bottom:2px solid #cd600c; padding-bottom:8px; }
 
         /* AVATAR */
@@ -35,19 +35,13 @@
         .avatar-overlay:hover { background:#a04800; }
         #avatarInput { display:none; }
 
-        /* PHOTO OPTIONS DROPDOWN */
+        /* DROPDOWN MENU */
         .avatar-menu { position:absolute; bottom:-90px; left:50%; transform:translateX(-50%); background:white; border-radius:10px; box-shadow:0 8px 25px rgba(0,0,0,0.2); overflow:hidden; z-index:100; min-width:180px; display:none; }
         .avatar-menu.open { display:block; }
         .avatar-menu-item { padding:12px 18px; font-size:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:10px; color:#333; transition:0.2s; }
         .avatar-menu-item:hover { background:#f0f0ff; color:#667eea; }
-        .avatar-menu-item:first-child { border-bottom:1px solid #eee; }
 
-        /* FULL SCREEN IMAGE MODAL */
-        .img-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:999; align-items:center; justify-content:center; }
-        .img-modal.open { display:flex; }
-        .img-modal img { max-width:90vw; max-height:90vh; border-radius:12px; border:4px solid white; }
-        .img-modal-close { position:absolute; top:20px; right:30px; color:white; font-size:36px; cursor:pointer; font-weight:bold; line-height:1; }
-        .img-modal-close:hover { color:#ff6b6b; }
+        /* USER TEXT */
         .user-name  { font-size:20px; font-weight:bold; color:#333; }
         .user-email { font-size:13px; color:#888; margin-top:4px; }
         .joined-date { margin-top:10px; font-size:12px; color:#aaa; background:#3a3060; padding:6px 12px; border-radius:20px; display:inline-block; }
@@ -55,169 +49,118 @@
         /* CURRENCY SELECTOR */
         .currency-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-top:5px; }
         .currency-btn { padding:10px; border:2px solid #ddd; border-radius:8px; background:white; cursor:pointer; font-size:18px; font-weight:bold; text-align:center; transition:0.3s; }
-        .currency-btn:hover { border-color:#667eea; background:#f0f0ff; }
         .currency-btn.active { border-color:#cd600c; background:#fff3e0; color:#cd600c; }
 
-        /* FORM FIELDS */
+        /* FORM */
         .form-group { margin-bottom:15px; }
-        .form-group label { display:block; font-size:13px; font-weight:bold; color:#555; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.4px; }
-        .form-group input { width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; transition:0.3s; background:white; }
-        .form-group input:focus { outline:none; border-color:#667eea; box-shadow:0 0 5px rgba(102,126,234,0.4); }
-        .form-group input[type="password"] { letter-spacing:2px; }
-
-        /* PASSWORD EYE TOGGLE */
+        .form-group label { display:block; font-size:13px; font-weight:bold; color:#555; margin-bottom:6px; text-transform:uppercase; }
+        .form-group input { width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; }
         .pwd-wrap { position:relative; }
-        .pwd-wrap input { padding-right:40px; }
-        .eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; font-size:16px; color:#888; padding:0; margin:0; line-height:1; }
-        .eye-btn:hover { color:#667eea; }
+        .eye-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; }
+        .save-btn { padding:10px 24px; background:linear-gradient(45deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
 
-        /* BUTTONS */
-        .save-btn { padding:10px 24px; background:linear-gradient(45deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; font-size:14px; transition:0.3s; }
-        .save-btn:hover { transform:scale(1.04); }
+        /* INFO ROW */
+        .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5d5c0; font-size:14px; }
+        .info-label { color:#888; }
+        .info-value { font-weight:bold; color:#333; }
 
-        /* MESSAGE */
+        /* MESSAGES */
         .msg { padding:10px; border-radius:8px; font-size:13px; font-weight:bold; margin-top:12px; text-align:center; display:none; }
         .msg.success { background:#d4edda; color:#155724; display:block; }
         .msg.error   { background:#f8d7da; color:#721c24; display:block; }
 
-        /* INFO ROW */
-        .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5d5c0; font-size:14px; }
-        .info-row:last-child { border-bottom:none; }
-        .info-label { color:#888; }
-        .info-value { font-weight:bold; color:#333; }
+        /* MODAL */
+        .img-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:999; align-items:center; justify-content:center; }
+        .img-modal.open { display:flex; }
+        .img-modal img { max-width:90vw; max-height:90vh; border-radius:12px; border:4px solid white; }
 
-        @media(max-width:900px) {
-            .profile-grid { grid-template-columns:1fr; }
-        }
+        @media(max-width:900px) { .profile-grid { grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
-<div class="layout">
 
-    <!-- SIDEBAR -->
+<div class="layout">
     <div class="sidebar">
         <h2>💰 ExpenseBuddy</h2>
         <div class="total-box">
             Total Spent
             <span id="sidebarTotal">0.00</span>
         </div>
-        <a href="/"             class="sidebar-nav-btn">🏠 Home</a>
+        <a href="/" class="sidebar-nav-btn">🏠 Home</a>
         <a href="dashboard.html" class="sidebar-nav-btn">📊 Dashboard</a>
         <button class="logout-btn" onclick="logout()">Logout</button>
     </div>
 
-    <!-- MAIN CONTENT -->
     <div class="main">
-        <div class="page-title">☻My Profile☻</div>
+        <div class="page-title">☻ My Profile ☻</div>
 
         <div class="profile-grid">
-
-            <!-- LEFT COLUMN -->
             <div>
-                <!-- AVATAR + INFO CARD -->
                 <div class="card">
                     <h3>Profile Picture</h3>
                     <div class="avatar-section">
                         <div class="avatar-wrap">
-                            <img id="avatarImg" src="https://ui-avatars.com/api/?name=User&background=667eea&color=fff&size=120" class="avatar" onclick="toggleAvatarMenu()" style="cursor:pointer;">
+                            <img id="avatarImg" src="" class="avatar" onclick="toggleAvatarMenu()">
                             <div class="avatar-overlay" onclick="toggleAvatarMenu()">✏️</div>
                             <input type="file" id="avatarInput" accept="image/*" onchange="uploadPicture(event)">
-                            <!-- DROPDOWN MENU -->
                             <div class="avatar-menu" id="avatarMenu">
                                 <div class="avatar-menu-item" onclick="viewProfilePicture()">🔍 See Profile Picture</div>
                                 <div class="avatar-menu-item" onclick="triggerUpload()">📤 Upload Profile Picture</div>
                                 <div class="avatar-menu-item" onclick="removeProfilePicture()" style="color:#dc3545;">🗑️ Remove Profile Picture</div>
                             </div>
                         </div>
-                        <div class="user-name"  id="displayName">—</div>
+                        <div class="user-name" id="displayName">—</div>
                         <div class="user-email" id="displayEmail">—</div>
                         <div class="joined-date" id="displayJoined">Joined —</div>
                     </div>
                     <div id="avatarMsg" class="msg"></div>
                 </div>
 
-                <!-- ACCOUNT INFO CARD -->
                 <div class="card">
                     <h3>Account Info</h3>
-                    <div class="info-row">
-                        <span class="info-label">Username</span>
-                        <span class="info-value" id="infoUsername">—</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Email</span>
-                        <span class="info-value" id="infoEmail">—</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Currency</span>
-                        <span class="info-value" id="infoCurrency">—</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Member Since</span>
-                        <span class="info-value" id="infoJoined">—</span>
-                    </div>
+                    <div class="info-row"><span class="info-label">Username</span><span class="info-value" id="infoUsername">—</span></div>
+                    <div class="info-row"><span class="info-label">Email</span><span class="info-value" id="infoEmail">—</span></div>
+                    <div class="info-row"><span class="info-label">Currency</span><span class="info-value" id="infoCurrency">—</span></div>
+                    <div class="info-row"><span class="info-label">Member Since</span><span class="info-value" id="infoJoined">—</span></div>
                 </div>
             </div>
 
-            <!-- RIGHT COLUMN -->
             <div>
-
-                <!-- UPDATE PROFILE CARD -->
                 <div class="card">
                     <h3>✏️ Update Profile</h3>
-                    <div class="form-group">
-                        <label>Username</label>
-                        <input type="text" id="editUsername" placeholder="Enter new username">
-                    </div>
-                    <div class="form-group">
-                        <label>Email</label>
-                        <input type="email" id="editEmail" placeholder="Enter new email">
-                    </div>
+                    <div class="form-group"><label>Username</label><input type="text" id="editUsername"></div>
+                    <div class="form-group"><label>Email</label><input type="email" id="editEmail"></div>
                     <button class="save-btn" onclick="updateProfile()">💾 Save Changes</button>
                     <div id="profileMsg" class="msg"></div>
                 </div>
 
-                <!-- CHANGE PASSWORD CARD -->
                 <div class="card">
                     <h3>🔒 Change Password</h3>
-                    <div class="form-group">
-                        <label>Current Password</label>
-                        <div class="pwd-wrap">
-                            <input type="password" id="currentPassword" placeholder="Enter current password">
-                            <button class="eye-btn" type="button" onclick="togglePwd('currentPassword', this)">👁️</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>New Password</label>
-                        <div class="pwd-wrap">
-                            <input type="password" id="newPassword" placeholder="Enter new password">
-                            <button class="eye-btn" type="button" onclick="togglePwd('newPassword', this)">👁️</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Confirm New Password</label>
-                        <div class="pwd-wrap">
-                            <input type="password" id="confirmNewPassword" placeholder="Confirm new password">
-                            <button class="eye-btn" type="button" onclick="togglePwd('confirmNewPassword', this)">👁️</button>
-                        </div>
-                    </div>
+                    <div class="form-group"><label>Current Password</label><input type="password" id="currentPassword"></div>
+                    <div class="form-group"><label>New Password</label><input type="password" id="newPassword"></div>
+                    <div class="form-group"><label>Confirm New Password</label><input type="password" id="confirmNewPassword"></div>
                     <button class="save-btn" onclick="changePassword()">🔐 Change Password</button>
                     <div id="passwordMsg" class="msg"></div>
                 </div>
 
-                <!-- CURRENCY CARD -->
                 <div class="card">
                     <h3>💱 Preferred Currency</h3>
-                    <p style="font-size:13px;color:#888;margin-bottom:12px;">Choose the currency symbol for your expenses</p>
                     <div class="currency-grid">
-                        <div class="currency-btn" onclick="setCurrency('₹')" id="cur-₹">₹<br><small style="font-size:10px;">INR</small></div>
-                        <div class="currency-btn" onclick="setCurrency('$')" id="cur-$">$<br><small style="font-size:10px;">USD</small></div>
-                        <div class="currency-btn" onclick="setCurrency('€')" id="cur-€">€<br><small style="font-size:10px;">EUR</small></div>
-                        <div class="currency-btn" onclick="setCurrency('£')" id="cur-£">£<br><small style="font-size:10px;">GBP</small></div>
-                        <div class="currency-btn" onclick="setCurrency('¥')" id="cur-¥">¥<br><small style="font-size:10px;">JPY</small></div>
+                        <div class="currency-btn" onclick="setCurrency('₹')" id="cur-₹">₹<br><small>INR</small></div>
+                        <div class="currency-btn" onclick="setCurrency('$')" id="cur-$">$<br><small>USD</small></div>
+                        <div class="currency-btn" onclick="setCurrency('€')" id="cur-€">€<br><small>EUR</small></div>
+                        <div class="currency-btn" onclick="setCurrency('£')" id="cur-£">£<br><small>GBP</small></div>
+                        <div class="currency-btn" onclick="setCurrency('¥')" id="cur-¥">¥<br><small>JPY</small></div>
                     </div>
                     <div id="currencyMsg" class="msg"></div>
                 </div>
 
+                <div class="card" style="border: 2px solid #dc3545; background: #fff5f5;">
+                    <h3 style="color: #dc3545; border-bottom: 2px solid #dc3545;">⚠️ Danger Zone</h3>
+                    <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Permanent action: deleting your account wipes all records.</p>
+                    <button class="logout-btn" style="margin-top: 0; background: #dc3545;" onclick="confirmDeleteAccount()">🗑️ Delete My Account</button>
+                    <div id="deleteMsg" class="msg"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -225,318 +168,118 @@
 
 <script>
 const API_BASE = "http://127.0.0.1:8000";
-let currentCurrency = "₹";
+const getToken = () => localStorage.getItem("access_token");
 
-function getToken() { return localStorage.getItem("access_token"); }
+function logout() { localStorage.clear(); window.location.href = "/"; }
 
-function logout() {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("currency");
-    window.location.href = "/";
-}
-
-// ── SHOW MESSAGE ───────────────────────────────────────────────
 function showMsg(id, text, type) {
     const el = document.getElementById(id);
+    if(!el) return;
     el.textContent = text;
-    el.className   = `msg ${type}`;
+    el.className = `msg ${type}`;
     setTimeout(() => { el.className = "msg"; el.textContent = ""; }, 3500);
 }
 
-// ── LOAD PROFILE ───────────────────────────────────────────────
 async function loadProfile() {
     const token = getToken();
-    if (!token) { window.location.href = "/"; return; }
-
+    if (!token) return logout();
     try {
-        const res  = await fetch(`${API_BASE}/profile`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!res.ok) { window.location.href = "/"; return; }
+        const res = await fetch(`${API_BASE}/profile`, { headers: { "Authorization": `Bearer ${token}` } });
         const user = await res.json();
-
-        // Avatar
-        if (user.profile_picture) {
-            document.getElementById("avatarImg").src = API_BASE + user.profile_picture;
-        } else {
-            document.getElementById("avatarImg").src =
-                `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=667eea&color=fff&size=120`;
-        }
-
-        // Display info
-        document.getElementById("displayName").textContent  = user.username;
+        
+        document.getElementById("avatarImg").src = user.profile_picture ? (API_BASE + user.profile_picture) : `https://ui-avatars.com/api/?name=${user.username}&background=667eea&color=fff`;
+        document.getElementById("displayName").textContent = user.username;
         document.getElementById("displayEmail").textContent = user.email;
-
-        const joined = user.created_at
-            ? new Date(user.created_at).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" })
-            : "—";
+        
+        const joined = user.joined_at ? new Date(user.joined_at).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" }) : "—";
         document.getElementById("displayJoined").textContent = `Joined ${joined}`;
-
-        // Account info card
         document.getElementById("infoUsername").textContent = user.username;
-        document.getElementById("infoEmail").textContent    = user.email;
+        document.getElementById("infoEmail").textContent = user.email;
         document.getElementById("infoCurrency").textContent = user.currency || "₹";
-        document.getElementById("infoJoined").textContent   = joined;
-
-        // Pre-fill edit fields
+        document.getElementById("infoJoined").textContent = joined;
         document.getElementById("editUsername").value = user.username;
-        document.getElementById("editEmail").value    = user.email;
-
-        // Currency
-        currentCurrency = user.currency || "₹";
-        localStorage.setItem("currency", currentCurrency);
-        highlightCurrency(currentCurrency);
-
-        // Sidebar total
+        document.getElementById("editEmail").value = user.email;
+        
+        highlightCurrency(user.currency || "₹");
         loadSidebarTotal(user.currency || "₹");
-
-    } catch (err) { console.error(err); }
+    } catch (e) { console.error(e); }
 }
 
-// ── SIDEBAR TOTAL ──────────────────────────────────────────────
-async function loadSidebarTotal(currency) {
-    try {
-        const res = await fetch(`${API_BASE}/expenses`, {
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-        if (!res.ok) return;
-        const expenses = await res.json();
-        const total = expenses.reduce((s, e) => s + e.amount, 0);
-        document.getElementById("sidebarTotal").textContent = `${currency}${total.toFixed(2)}`;
-    } catch (err) { console.error(err); }
+async function loadSidebarTotal(cur) {
+    const res = await fetch(`${API_BASE}/expenses`, { headers: { "Authorization": `Bearer ${getToken()}` } });
+    const data = await res.json();
+    const total = data.reduce((s, e) => s + e.amount, 0);
+    document.getElementById("sidebarTotal").textContent = `${cur}${total.toFixed(2)}`;
 }
 
-// ── UPDATE PROFILE ─────────────────────────────────────────────
-async function updateProfile() {
-    const username = document.getElementById("editUsername").value.trim();
-    const email    = document.getElementById("editEmail").value.trim();
-
-    if (!username || !email) {
-        showMsg("profileMsg", "Please fill in both fields", "error"); return;
+async function confirmDeleteAccount() {
+    if (confirm("FINAL WARNING: Delete your account and all expenses permanently?")) {
+        const res = await fetch(`${API_BASE}/profile/delete`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
+        if (res.ok) { alert("Account deleted."); logout(); }
+        else showMsg("deleteMsg", "Delete failed", "error");
     }
-
-    try {
-        const res = await fetch(`${API_BASE}/profile`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ username, email })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showMsg("profileMsg", "✅ Profile updated successfully!", "success");
-            localStorage.setItem("username", data.username);
-            loadProfile();
-        } else {
-            showMsg("profileMsg", data.detail || "Update failed", "error");
-        }
-    } catch { showMsg("profileMsg", "Server not reachable", "error"); }
 }
 
-// ── CHANGE PASSWORD ────────────────────────────────────────────
+async function updateProfile() {
+    const username = document.getElementById("editUsername").value;
+    const email = document.getElementById("editEmail").value;
+    const res = await fetch(`${API_BASE}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+        body: JSON.stringify({ username, email })
+    });
+    if (res.ok) { showMsg("profileMsg", "Updated!", "success"); loadProfile(); }
+}
+
 async function changePassword() {
     const current = document.getElementById("currentPassword").value;
     const newPass = document.getElementById("newPassword").value;
-    const confirm = document.getElementById("confirmNewPassword").value;
-
-    if (!current || !newPass || !confirm) {
-        showMsg("passwordMsg", "Please fill in all fields", "error"); return;
-    }
-    if (newPass !== confirm) {
-        showMsg("passwordMsg", "New passwords do not match", "error"); return;
-    }
-    if (newPass.length < 6) {
-        showMsg("passwordMsg", "Password must be at least 6 characters", "error"); return;
-    }
-    if (current === newPass) {
-        showMsg("passwordMsg", "New password must be different from current", "error"); return;
-    }
-
-    try {
-        const res = await fetch(`${API_BASE}/profile/password`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ current_password: current, new_password: newPass })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            showMsg("passwordMsg", "✅ Password changed successfully!", "success");
-            ["currentPassword","newPassword","confirmNewPassword"]
-                .forEach(id => document.getElementById(id).value = "");
-        } else {
-            showMsg("passwordMsg", data.detail || "Failed to change password", "error");
-        }
-    } catch { showMsg("passwordMsg", "Server not reachable", "error"); }
+    const res = await fetch(`${API_BASE}/profile/password`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+        body: JSON.stringify({ current_password: current, new_password: newPass })
+    });
+    if (res.ok) showMsg("passwordMsg", "Changed!", "success");
+    else showMsg("passwordMsg", "Error!", "error");
 }
 
-// ── UPLOAD PICTURE ─────────────────────────────────────────────
-// ── AVATAR MENU ────────────────────────────────────────────────
-function toggleAvatarMenu() {
-    const menu = document.getElementById("avatarMenu");
-    menu.classList.toggle("open");
-}
-
-// Close menu when clicking outside
-document.addEventListener("click", function(e) {
-    const wrap = document.querySelector(".avatar-wrap");
-    const menu = document.getElementById("avatarMenu");
-    if (wrap && !wrap.contains(e.target)) {
-        menu.classList.remove("open");
-    }
-});
-
-function triggerUpload() {
-    document.getElementById("avatarMenu").classList.remove("open");
-    document.getElementById("avatarInput").click();
-}
-
-function viewProfilePicture() {
-    document.getElementById("avatarMenu").classList.remove("open");
-    const src = document.getElementById("avatarImg").src;
-    document.getElementById("modalImg").src = src;
-    document.getElementById("imgModal").classList.add("open");
-}
-
-function closeModal() {
-    document.getElementById("imgModal").classList.remove("open");
-}
-
-// Close modal on Escape key
-document.addEventListener("keydown", e => {
-    if (e.key === "Escape") closeModal();
-});
-
-async function uploadPicture(event) {
-    const file = event.target.files[0];
+async function uploadPicture(e) {
+    const file = e.target.files;
     if (!file) return;
-
-    // Show preview immediately
-    const reader = new FileReader();
-    reader.onload = e => {
-        document.getElementById("avatarImg").src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-
     const formData = new FormData();
     formData.append("file", file);
-
-    try {
-        showMsg("avatarMsg", "⏳ Uploading...", "success");
-        const res = await fetch(`${API_BASE}/profile/picture`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${getToken()}` },
-            body: formData
-        });
-        const data = await res.json();
-        if (res.ok) {
-            const newSrc = API_BASE + data.picture_url + "?t=" + Date.now();
-
-            // Update profile page avatar
-            document.getElementById("avatarImg").src = newSrc;
-
-            // ✅ Update sidebar icon in index.html via localStorage signal
-            localStorage.setItem("profilePicUpdated", newSrc);
-
-            showMsg("avatarMsg", "✅ Profile picture updated!", "success");
-        } else {
-            showMsg("avatarMsg", data.detail || "Upload failed", "error");
-        }
-    } catch { showMsg("avatarMsg", "Server not reachable", "error"); }
-
-    // Reset input so same file can be selected again
-    document.getElementById("avatarInput").value = "";
+    const res = await fetch(`${API_BASE}/profile/picture`, { method: "POST", headers: { "Authorization": `Bearer ${getToken()}` }, body: formData });
+    if (res.ok) { loadProfile(); showMsg("avatarMsg", "Updated!", "success"); }
 }
 
-// ── REMOVE PROFILE PICTURE ──────────────────────────────────────
 async function removeProfilePicture() {
-    document.getElementById("avatarMenu").classList.remove("open");
-
-    if (!confirm("Are you sure you want to remove your profile picture?")) return;
-
-    try {
-        const res = await fetch(`${API_BASE}/profile/picture`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-        const data = await res.json();
-        if (res.ok) {
-            // Reset to initials avatar
-            const username = document.getElementById("displayName").textContent || "User";
-            const defaultSrc = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=667eea&color=fff&size=120`;
-            document.getElementById("avatarImg").src = defaultSrc;
-
-            // Update sidebar too
-            localStorage.setItem("profilePicUpdated", defaultSrc);
-            localStorage.removeItem("profilePicture");
-
-            showMsg("avatarMsg", "✅ Profile picture removed!", "success");
-        } else {
-            showMsg("avatarMsg", data.detail || "Failed to remove", "error");
-        }
-    } catch { showMsg("avatarMsg", "Server not reachable", "error"); }
+    if (!confirm("Remove photo?")) return;
+    const res = await fetch(`${API_BASE}/profile/picture`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
+    if (res.ok) { loadProfile(); showMsg("avatarMsg", "Removed!", "success"); }
 }
 
-// ── CURRENCY ───────────────────────────────────────────────────
+function setCurrency(cur) {
+    fetch(`${API_BASE}/profile/currency`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
+        body: JSON.stringify({ currency: cur })
+    }).then(res => { if(res.ok) { loadProfile(); showMsg("currencyMsg", "Currency updated!", "success"); } });
+}
+
 function highlightCurrency(cur) {
-    ["₹","$","€","£","¥"].forEach(c => {
-        const el = document.getElementById(`cur-${c}`);
-        if (el) el.classList.toggle("active", c === cur);
-    });
+    ["₹","$","€","£","¥"].forEach(c => document.getElementById(`cur-${c}`).classList.toggle("active", c === cur));
 }
 
-async function setCurrency(cur) {
-    try {
-        const res = await fetch(`${API_BASE}/profile/currency`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`
-            },
-            body: JSON.stringify({ currency: cur })
-        });
-        const data = await res.json();
-        if (res.ok) {
-            currentCurrency = cur;
-            localStorage.setItem("currency", cur);
-            highlightCurrency(cur);
-            document.getElementById("infoCurrency").textContent = cur;
-            loadSidebarTotal(cur);
-            showMsg("currencyMsg", `✅ Currency set to ${cur}`, "success");
-        } else {
-            showMsg("currencyMsg", data.detail || "Failed", "error");
-        }
-    } catch { showMsg("currencyMsg", "Server not reachable", "error"); }
-}
+function toggleAvatarMenu() { document.getElementById("avatarMenu").classList.toggle("open"); }
+function triggerUpload() { document.getElementById("avatarInput").click(); toggleAvatarMenu(); }
+function viewProfilePicture() { document.getElementById("modalImg").src = document.getElementById("avatarImg").src; document.getElementById("imgModal").classList.add("open"); toggleAvatarMenu(); }
+function closeModal() { document.getElementById("imgModal").classList.remove("open"); }
 
-// ── PASSWORD TOGGLE ───────────────────────────────────────────
-function togglePwd(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-    } else {
-        input.type = "password";
-        btn.textContent = "👁️";
-    }
-}
-
-// ── INIT ────────────────────────────────────────────────────────
-window.addEventListener("load", function() {
-    if (!getToken()) { window.location.href = "/"; return; }
-    loadProfile();
-});
+window.addEventListener("load", loadProfile);
 </script>
-<!-- FULL SCREEN IMAGE MODAL -->
-<div class="img-modal" id="imgModal" onclick="closeModal()">
-    <span class="img-modal-close" onclick="closeModal()">✕</span>
-    <img id="modalImg" src="" alt="Profile Picture">
-</div>
 
+<div class="img-modal" id="imgModal" onclick="closeModal()">
+    <img id="modalImg" src="">
+</div>
 </body>
 </html>

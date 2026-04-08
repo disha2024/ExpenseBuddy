@@ -1,4 +1,4 @@
-const API_BASE = "http://127.0.0.1:8000";
+=const API_BASE = "http://127.0.0.1:8000";
 
 // GET TOKEN FROM LOCAL STORAGE
 function getToken() {
@@ -20,7 +20,12 @@ async function addExpense(title, amount, category, date) {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ title, amount, category, date: date || null })
+            body: JSON.stringify({
+                description: title,   // ✅ FIXED
+                amount: amount,
+                category: category,
+                date: date || null
+            })
         });
 
         if (response.ok) {
@@ -53,7 +58,12 @@ async function updateExpense(id, title, amount, category, date) {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
-            body: JSON.stringify({ title, amount, category, date: date || null })
+            body: JSON.stringify({
+                description: title,   // ✅ FIXED
+                amount: amount,
+                category: category,
+                date: date || null
+            })
         });
 
         if (response.ok) {
@@ -103,15 +113,14 @@ function clearForm() {
 }
 
 // EDIT EXPENSE
-function editExpense(id, title, amount, category, date) {
+function editExpense(id, description, amount, category, date) {
     document.getElementById("expense_id").value = id;
-    document.getElementById("title").value = title;
+    document.getElementById("title").value = description;  // ✅ FIXED
     document.getElementById("amount").value = amount;
     document.getElementById("category").value = category;
     document.getElementById("date").value = date;
     document.getElementById("cancelBtn").style.display = "inline-block";
-    
-    // Scroll to top
+
     window.scrollTo(0, 0);
 }
 
@@ -123,7 +132,7 @@ function cancelEdit() {
 // FILTER EXPENSES
 async function filterExpenses() {
     const filterCategory = document.getElementById("filterCategory").value.trim().toLowerCase();
-    
+
     if (!filterCategory) {
         loadExpenses();
         return;
@@ -180,12 +189,12 @@ function displayExpenses(expenses) {
         const row = document.createElement("tr");
         row.innerHTML = `
             <td>${expense.id}</td>
-            <td>${expense.title}</td>
+            <td>${expense.description}</td>  <!-- ✅ FIXED -->
             <td>₹${expense.amount.toFixed(2)}</td>
             <td>${expense.category}</td>
             <td>${expense.date}</td>
             <td>
-                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.title}', ${expense.amount}, '${expense.category}', '${expense.date}')">✏️ Edit</button>
+                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.description}', ${expense.amount}, '${expense.category}', '${expense.date}')">✏️ Edit</button>
                 <button class="delete-btn" onclick="deleteExpense(${expense.id})">🗑️ Delete</button>
             </td>
         `;
@@ -195,7 +204,7 @@ function displayExpenses(expenses) {
     document.getElementById("totalAmount").textContent = totalAmount.toFixed(2);
 }
 
-// LOAD EXPENSES (Complete version)
+// LOAD EXPENSES
 async function loadExpenses() {
     try {
         const token = getToken();

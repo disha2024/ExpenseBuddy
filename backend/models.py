@@ -1,33 +1,32 @@
-from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey, DateTime, Boolean
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from fastapi_users.db import SQLAlchemyBaseUserTable
-from database import Base
+from sqlmodel import SQLModel, Field
+from typing import Optional
+import datetime  # Import the whole module instead of 'from datetime import date'
 
 
-# ── USER MODEL (FastAPI Users) ────────────────────────────────
-class User(SQLAlchemyBaseUserTable[int], Base):
-    __tablename__ = "users"
+class User(SQLModel, table=True):
+    __tablename__: str = "users"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str = Field(unique=True, index=True)
+    username: str
+    joined_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    # --- REQUIRED BY FASTAPI USERS ---
+    hashed_password: str = Field(nullable=False)
+    is_active: bool = Field(default=True)
+    is_superuser: bool = Field(default=False)
+    is_verified: bool = Field(default=False)
+    # ---------------------------------
+    
+    profile_picture: Optional[str] = Field(default=None)
+    currency: Optional[str] = Field(default=None)
 
-    id              = Column(Integer, primary_key=True, index=True)
-    # FastAPI Users auto-manages: email, hashed_password, is_active, is_superuser, is_verified
-    username        = Column(String(50),  unique=True,  nullable=False)
-    profile_picture = Column(String(300), nullable=True, default=None)
-    currency        = Column(String(10),  nullable=False, default="₹")
-    created_at      = Column(DateTime, server_default=func.now())
-
-    expenses = relationship("Expense", back_populates="owner")
-
-
-# ── EXPENSE MODEL ─────────────────────────────────────────────
-class Expense(Base):
-    __tablename__ = "expenses"
-
-    id       = Column(Integer, primary_key=True, index=True)
-    title    = Column(String(100), nullable=False)
-    amount   = Column(Float,       nullable=False)
-    category = Column(String(50))
-    date     = Column(Date)
-    user_id  = Column(Integer, ForeignKey("users.id"), nullable=False)
-
-    owner = relationship("User", back_populates="expenses")
+class Expense(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    amount: float
+    category: str
+    
+    # Use datetime.date to avoid clashing with the field name 'date'
+    date: datetime.date = Field(default_factory=datetime.date.today)
+    
+    user_id: int = Field(foreign_key="users.id")

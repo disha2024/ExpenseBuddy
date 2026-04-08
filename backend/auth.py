@@ -7,7 +7,7 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel.ext.asyncio.session import AsyncSession          # ← was: from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_async_session
 from models import User
 
