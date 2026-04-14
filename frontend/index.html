@@ -112,9 +112,10 @@
             <div class="form-grid">
                 <input type="text"   id="title"    placeholder="Expense Title">
                 <input type="number" id="amount"   placeholder="Amount" step="0.01">
-                <input type="text"   id="category" placeholder="Category (e.g. Food, Travel, Medical)">
+                <input type="text"   id="category" placeholder="Category (e.g. Food, Travel, Medical)" list="categoryList">
                 <input type="date"   id="date">
             </div>
+            <datalist id="categoryList"></datalist>
             <br>
             <button class="primary-btn" onclick="saveExpense()">💾 Save Expense</button>
             <button class="cancel-btn"  id="cancelBtn" style="display:none;" onclick="cancelEdit()">Cancel</button>
@@ -279,6 +280,7 @@ function showDashboard() {
     document.getElementById("dashboardSection").style.display = "block";
     updateCurrencySymbol();
     loadSidebarProfile();
+    loadCategories();
     loadExpenses();
 }
 

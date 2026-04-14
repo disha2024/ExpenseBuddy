@@ -1,8 +1,35 @@
-=const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "http://127.0.0.1:8000";
 
 // GET TOKEN FROM LOCAL STORAGE
 function getToken() {
     return localStorage.getItem("access_token");
+}
+
+// LOAD CATEGORIES
+async function loadCategories() {
+    try {
+        const token = getToken();
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE}/categories`, {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const categories = await response.json();
+            const datalist = document.getElementById("categoryList");
+            datalist.innerHTML = "";
+            categories.forEach(cat => {
+                const option = document.createElement("option");
+                option.value = cat.name;
+                datalist.appendChild(option);
+            });
+        }
+    } catch (err) {
+        console.error("Error loading categories:", err);
+    }
 }
 
 // ADD EXPENSE
@@ -23,7 +50,7 @@ async function addExpense(title, amount, category, date) {
             body: JSON.stringify({
                 title: title,
                 amount: amount,
-                category: category,
+                category_name: category,
                 date: date || null
             })
         });
@@ -158,7 +185,7 @@ async function filterExpenses() {
 
         const expenses = await response.json();
         const filtered = expenses.filter(exp => 
-            exp.category.toLowerCase().includes(filterCategory)
+            exp.category_name.toLowerCase().includes(filterCategory)
         );
 
         displayExpenses(filtered);
@@ -190,10 +217,10 @@ function displayExpenses(expenses) {
         row.innerHTML = `
             <td>${expense.title}</td>
             <td>₹ ${expense.amount.toFixed(2)}</td>
-            <td>${expense.category}</td>
+            <td>${expense.category_name}</td>
             <td>${expense.date}</td>
             <td>
-                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.title}', ${expense.amount}, '${expense.category}', '${expense.date}')">✏️ Edit</button>
+                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.title}', ${expense.amount}, '${expense.category_name}', '${expense.date}')">✏️ Edit</button>
                 <button class="delete-btn" onclick="deleteExpense(${expense.id})">🗑️ Delete</button>
             </td>
         `;
