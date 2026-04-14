@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field
 from typing import Optional
 import datetime  # Import the whole module instead of 'from datetime import date'
+from sqlalchemy import Column, DateTime, func
 
 
 class User(SQLModel, table=True):
@@ -10,6 +11,9 @@ class User(SQLModel, table=True):
     email: str = Field(unique=True, index=True)
     username: str
     joined_at: datetime.datetime = Field(default_factory=datetime.datetime.utcnow)
+    created_at: datetime.datetime = Field(
+        sa_column=Column(DateTime, server_default=func.now(), nullable=False)
+    )
     # --- REQUIRED BY FASTAPI USERS ---
     hashed_password: str = Field(nullable=False)
     is_active: bool = Field(default=True)
@@ -18,13 +22,18 @@ class User(SQLModel, table=True):
     # ---------------------------------
     
     profile_picture: Optional[str] = Field(default=None)
-    currency: Optional[str] = Field(default=None)
+    currency: Optional[str] = Field(default="INR")        
+
+class Category(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True)  # Unique per user? Wait, for now global, but can add user_id later
+    user_id: int = Field(foreign_key="users.id")  # Make it per user
 
 class Expense(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
     amount: float
-    category: str
+    category_id: int = Field(foreign_key="categories.id")
     
     # Use datetime.date to avoid clashing with the field name 'date'
     date: datetime.date = Field(default_factory=datetime.date.today)

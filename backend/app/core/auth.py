@@ -26,6 +26,12 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret    = SECRET
     verification_token_secret      = SECRET
 
+    async def create(self, user_create, safe: bool = False, request: Optional[Request] = None):
+        # Ensure currency has a default value
+        if not hasattr(user_create, 'currency') or user_create.currency is None:
+            user_create.currency = "INR"
+        return await super().create(user_create, safe=safe, request=request)
+
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"✅ New user registered: {user.email}")
 

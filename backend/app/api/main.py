@@ -4,16 +4,18 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from sqlalchemy import delete
 from sqlalchemy.orm import Session
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 from datetime import date
 
 from database import create_db_and_tables, get_db, get_async_session
-from models import User, Expense
+from models import User, Expense, Category
 from schemas import (
     UserRead, UserCreate, UserUpdate,
     ExpenseCreate, ExpenseUpdate, ExpenseResponse,
+    CategoryCreate, CategoryResponse,
     ProfileUpdate, CurrencyUpdate, PasswordChange
 )
 from auth import fastapi_users, auth_backend, current_active_user
@@ -140,6 +142,17 @@ async def change_password(
     return {"message": "Password changed successfully"}
 
 
+@app.put("/profile/currency")
+async def update_currency(
+    data: CurrencyUpdate,
+    current_user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
+):
+    current_user.currency = data.currency
+    await session.commit()
+    await session.refresh(current_user)
+    return {"message": "Currency updated successfully"}
+
 
 @app.post("/profile/picture")
 async def upload_picture(
@@ -187,6 +200,9 @@ async def delete_account(
     session: AsyncSession = Depends(get_async_session)
 ):
     try:
+        # Delete all expenses for the user first
+        await session.execute(delete(Expense).where(Expense.user_id == current_user.id))
+        # Then delete the user
         await session.delete(current_user)
         await session.commit()
         return {"message": "Account deleted successfully"}
@@ -195,17 +211,58 @@ async def delete_account(
         raise HTTPException(status_code=500, detail="Could not delete account")
 
 
-# 💰 EXPENSES
+# � CATEGORIES
+@app.post("/categories", response_model=CategoryResponse)
+def create_category(
+    category: CategoryCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(current_active_user)
+):
+    # Check if category already exists for this user
+    existing = db.query(Category).filter(
+        Category.name == category.name,
+        Category.user_id == current_user.id
+    ).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Category already exists")
+
+    new_category = Category(name=category.name, user_id=current_user.id)
+    db.add(new_category)
+    db.commit()
+    db.refresh(new_category)
+    return new_category
+
+
+@app.get("/categories", response_model=List[CategoryResponse])
+def get_categories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(current_active_user)
+):
+    return db.query(Category).filter(Category.user_id == current_user.id).all()
+
+
+# �💰 EXPENSES
 @app.post("/expenses", response_model=ExpenseResponse)
 def create_expense(
     expense: ExpenseCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
+    # Get or create category
+    category = db.query(Category).filter(
+        Category.name == expense.category_name,
+        Category.user_id == current_user.id
+    ).first()
+    if not category:
+        category = Category(name=expense.category_name, user_id=current_user.id)
+        db.add(category)
+        db.commit()
+        db.refresh(category)
+
     new_expense = Expense(
         title=expense.title,
         amount=expense.amount,
-        category=expense.category,
+        category_id=category.id,
         date=expense.date if expense.date else date.today(),
         user_id=current_user.id
     )
@@ -214,7 +271,14 @@ def create_expense(
     db.commit()
     db.refresh(new_expense)
 
-    return new_expense
+    # Return with category_name
+    return ExpenseResponse(
+        id=new_expense.id,
+        title=new_expense.title,
+        amount=new_expense.amount,
+        category_name=category.name,
+        date=new_expense.date
+    )
 
 
 @app.get("/expenses", response_model=List[ExpenseResponse])
@@ -222,9 +286,22 @@ def get_expenses(
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user)
 ):
-    return db.query(Expense).filter(
+    expenses = db.query(Expense).filter(
         Expense.user_id == current_user.id
     ).all()
+    
+    # Build response with category names
+    result = []
+    for exp in expenses:
+        category = db.query(Category).filter(Category.id == exp.category_id).first()
+        result.append(ExpenseResponse(
+            id=exp.id,
+            title=exp.title,
+            amount=exp.amount,
+            category_name=category.name if category else "Unknown",
+            date=exp.date
+        ))
+    return result
 
 
 @app.delete("/expenses/{expense_id}")
@@ -244,7 +321,52 @@ def delete_expense(
     db.delete(expense)
     db.commit()
 
-    return {"message": "Deleted"}
+@app.put("/expenses/{expense_id}", response_model=ExpenseResponse)
+def update_expense(
+    expense_id: int,
+    expense_data: ExpenseUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(current_active_user)
+):
+    expense = db.query(Expense).filter(
+        Expense.id == expense_id,
+        Expense.user_id == current_user.id
+    ).first()
+
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    if expense_data.title is not None:
+        expense.title = expense_data.title
+    if expense_data.amount is not None:
+        expense.amount = expense_data.amount
+    if expense_data.category_name is not None:
+        # Get or create category
+        category = db.query(Category).filter(
+            Category.name == expense_data.category_name,
+            Category.user_id == current_user.id
+        ).first()
+        if not category:
+            category = Category(name=expense_data.category_name, user_id=current_user.id)
+            db.add(category)
+            db.commit()
+            db.refresh(category)
+        expense.category_id = category.id
+    if expense_data.date is not None:
+        expense.date = expense_data.date
+
+    db.commit()
+    db.refresh(expense)
+    
+    # Return with category_name
+    category = db.query(Category).filter(Category.id == expense.category_id).first()
+    return ExpenseResponse(
+        id=expense.id,
+        title=expense.title,
+        amount=expense.amount,
+        category_name=category.name if category else "Unknown",
+        date=expense.date
+    )
 
 
 # 📦 STATIC FILES

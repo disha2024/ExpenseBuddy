@@ -3,3 +3,12 @@ __pycache__/
 .env
 venv/
 *.db
+
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/

@@ -21,7 +21,7 @@ async function addExpense(title, amount, category, date) {
                 "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
-                description: title,   // ✅ FIXED
+                title: title,
                 amount: amount,
                 category: category,
                 date: date || null
@@ -59,7 +59,7 @@ async function updateExpense(id, title, amount, category, date) {
                 "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({
-                description: title,   // ✅ FIXED
+                title: title,
                 amount: amount,
                 category: category,
                 date: date || null
@@ -113,9 +113,9 @@ function clearForm() {
 }
 
 // EDIT EXPENSE
-function editExpense(id, description, amount, category, date) {
+function editExpense(id, title, amount, category, date) {
     document.getElementById("expense_id").value = id;
-    document.getElementById("title").value = description;  // ✅ FIXED
+    document.getElementById("title").value = title;
     document.getElementById("amount").value = amount;
     document.getElementById("category").value = category;
     document.getElementById("date").value = date;
@@ -188,13 +188,12 @@ function displayExpenses(expenses) {
 
         const row = document.createElement("tr");
         row.innerHTML = `
-            <td>${expense.id}</td>
-            <td>${expense.description}</td>  <!-- ✅ FIXED -->
-            <td>₹${expense.amount.toFixed(2)}</td>
+            <td>${expense.title}</td>
+            <td>₹ ${expense.amount.toFixed(2)}</td>
             <td>${expense.category}</td>
             <td>${expense.date}</td>
             <td>
-                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.description}', ${expense.amount}, '${expense.category}', '${expense.date}')">✏️ Edit</button>
+                <button class="edit-btn" onclick="editExpense(${expense.id}, '${expense.title}', ${expense.amount}, '${expense.category}', '${expense.date}')">✏️ Edit</button>
                 <button class="delete-btn" onclick="deleteExpense(${expense.id})">🗑️ Delete</button>
             </td>
         `;
