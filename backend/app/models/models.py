@@ -25,6 +25,8 @@ class User(SQLModel, table=True):
     currency: Optional[str] = Field(default="INR")        
 
 class Category(SQLModel, table=True):
+    __tablename__: str = "categories"
+    
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)  # Unique per user? Wait, for now global, but can add user_id later
     user_id: int = Field(foreign_key="users.id")  # Make it per user

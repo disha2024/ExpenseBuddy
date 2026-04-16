@@ -88,7 +88,7 @@ async function updateExpense(id, title, amount, category, date) {
             body: JSON.stringify({
                 title: title,
                 amount: amount,
-                category: category,
+                category_name: category,
                 date: date || null
             })
         });

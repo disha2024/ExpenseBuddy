@@ -7,13 +7,16 @@ from fastapi_users.authentication import (
     JWTStrategy,
 )
 from fastapi_users.db import SQLAlchemyUserDatabase
-from sqlmodel.ext.asyncio.session import AsyncSession          # ← was: from sqlalchemy.ext.asyncio import AsyncSession
-from database import get_async_session
-from models import User
+from sqlmodel.ext.asyncio.session import AsyncSession
+
+# ✅ FIXED IMPORTS
+from app.db.database import get_async_session
+from app.models.models import User
+
 
 # ── CONFIG ─────────────────────────────────────────────────────
-SECRET         = "changethis123secret999key"
-TOKEN_LIFETIME = 60 * 60 * 24  # 24 hours in seconds
+SECRET = "changethis123secret999keyforjwt256bitsminimumlength"
+TOKEN_LIFETIME = 60 * 60 * 24  # 24 hours
 
 
 # ── USER DATABASE ──────────────────────────────────────────────
@@ -23,11 +26,10 @@ async def get_user_db(session: AsyncSession = Depends(get_async_session)):
 
 # ── USER MANAGER ──────────────────────────────────────────────
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
-    reset_password_token_secret    = SECRET
-    verification_token_secret      = SECRET
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
 
     async def create(self, user_create, safe: bool = False, request: Optional[Request] = None):
-        # Ensure currency has a default value
         if not hasattr(user_create, 'currency') or user_create.currency is None:
             user_create.currency = "INR"
         return await super().create(user_create, safe=safe, request=request)
@@ -49,8 +51,10 @@ async def get_user_manager(user_db=Depends(get_user_db)):
 # ── JWT AUTH BACKEND ───────────────────────────────────────────
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
+
 def get_jwt_strategy() -> JWTStrategy:
     return JWTStrategy(secret=SECRET, lifetime_seconds=TOKEN_LIFETIME)
+
 
 auth_backend = AuthenticationBackend(
     name="jwt",
@@ -58,12 +62,14 @@ auth_backend = AuthenticationBackend(
     get_strategy=get_jwt_strategy,
 )
 
+
 # ── FASTAPI USERS INSTANCE ─────────────────────────────────────
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
     [auth_backend],
 )
 
+
 # ── CURRENT USER HELPERS ───────────────────────────────────────
-current_active_user          = fastapi_users.current_user(active=True)
+current_active_user = fastapi_users.current_user(active=True)
 current_active_verified_user = fastapi_users.current_user(active=True, verified=True)

@@ -2,7 +2,7 @@ from sqlmodel import create_engine, Session, SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine  
 from typing import AsyncGenerator
-from models import User, Expense
+from app.models.models import User, Expense, Category
 
 DATABASE_URL = "mysql+pymysql://root:dishasql%402004@localhost:3306/expense_db"
 DATABASE_URL_ASYNC = "mysql+aiomysql://root:dishasql%402004@localhost:3306/expense_db"
