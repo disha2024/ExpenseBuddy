@@ -2,6 +2,8 @@ from sqlmodel import SQLModel, Field
 from typing import Optional
 import datetime  # Import the whole module instead of 'from datetime import date'
 from sqlalchemy import Column, DateTime, func
+from decimal import Decimal
+#from sqlmodel import SQLModel, Field, Column, Decimal as SQLDecimal
 
 
 class User(SQLModel, table=True):
@@ -34,7 +36,7 @@ class Category(SQLModel, table=True):
 class Expense(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
-    amount: float
+    amount: Decimal = Field(default=0, max_digits=10, decimal_places=10)
     category_id: int = Field(foreign_key="categories.id")
     
     # Use datetime.date to avoid clashing with the field name 'date'
