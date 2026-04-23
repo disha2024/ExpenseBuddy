@@ -20,13 +20,14 @@ UPLOAD_DIR = os.path.abspath(
 )
 
 
-# ── GET PROFILE ────────────────────────────────────────────────
+
+# GET PROFILE
 @router.get("", response_model=UserRead)
 async def get_profile(current_user: User = Depends(current_active_user)):
     return current_user
 
 
-# ── UPDATE PROFILE ─────────────────────────────────────────────
+#UPDATE PROFILE
 @router.put("", response_model=UserRead)
 async def update_profile(
     data: ProfileUpdate,
@@ -48,7 +49,7 @@ async def update_profile(
         raise HTTPException(status_code=500, detail=f"Error updating profile: {str(e)}")
 
 
-# ── CHANGE PASSWORD ────────────────────────────────────────────
+#  CHANGE PASSWORD
 @router.put("/password")
 async def change_password(
     data: PasswordChange,
@@ -78,7 +79,7 @@ async def change_password(
         raise HTTPException(status_code=500, detail=f"Error changing password: {str(e)}")
 
 
-# ── UPDATE CURRENCY ────────────────────────────────────────────
+# ── UPDATE CURRENCY 
 @router.put("/currency")
 async def update_currency(
     data: CurrencyUpdate,
@@ -98,7 +99,7 @@ async def update_currency(
         raise HTTPException(status_code=500, detail=f"Error updating currency: {str(e)}")
 
 
-# ── UPLOAD PROFILE PICTURE ─────────────────────────────────────
+# UPLOAD PROFILE PICTURE 
 @router.post("/picture")
 async def upload_picture(
     file: UploadFile = File(...),
@@ -125,7 +126,7 @@ async def upload_picture(
         raise HTTPException(status_code=500, detail=f"Error uploading picture: {str(e)}")
 
 
-# ── REMOVE PROFILE PICTURE ─────────────────────────────────────
+# ── REMOVE PROFILE PICTURE
 @router.delete("/picture")
 async def remove_profile_picture(
     current_user: User = Depends(current_active_user),

@@ -3,664 +3,337 @@
 <head>
     <title>ExpenseBuddy</title>
     <meta charset="UTF-8">
-    <script src="/static/script.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #1f1c2c, #928dab); min-height: 100vh; }
-        .layout { display: flex; }
+        
+        /* CENTER THE LOGIN BOX */
+        body { 
+            background: linear-gradient(135deg, #1f1c2c, #928dab); 
+            min-height: 100vh; 
+            display: flex;             
+            justify-content: center;    
+            align-items: center;        
+        }
+
+        /* RESET FLEX FOR DASHBOARD (Prevents sidebar from shrinking) */
+        #dashboardSection { 
+            width: 100%; 
+            height: 100%; 
+            align-self: flex-start; /* Keeps dashboard at the top */
+        }
+        
+        .layout { display: flex; width: 100%; }
 
         /* SIDEBAR */
-        .sidebar { width: 280px; background: #14131f; color: white; padding: 30px 20px; min-height: 100vh; display: flex; flex-direction: column; }
+        .sidebar { width: 280px; background: #14131f; color: white; padding: 30px 20px; min-height: 100vh; display: flex; flex-direction: column; flex-shrink: 0; }
         .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
         .sidebar h2 { text-align: center; margin: 0; font-size: 18px; }
-        .profile-icon-btn { display: inline-block; text-decoration: none; flex-shrink: 0; }
-        .sidebar-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #667eea; transition: 0.3s; cursor: pointer; }
+        .sidebar-avatar { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid #667eea; cursor: pointer; transition: 0.3s; }
         .sidebar-avatar:hover { border-color: #43cea2; transform: scale(1.1); }
-        .total-box { background: linear-gradient(45deg, #43cea2, #185a9d); padding: 25px; border-radius: 15px; text-align: center; font-size: 20px; font-weight: bold; }
+        .total-box { background: linear-gradient(45deg, #43cea2, #185a9d); padding: 25px; border-radius: 15px; text-align: center; font-size: 18px; font-weight: bold; }
         .total-box span { display: block; font-size: 28px; margin-top: 10px; }
-        .dashboard-nav-btn { display: block; width: 100%; margin-top: 20px; padding: 10px; background: linear-gradient(45deg, #43cea2, #185a9d); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; box-sizing: border-box; }
-        .dashboard-nav-btn:hover { opacity: 0.85; transform: scale(1.02); }
-        .logout-btn { width: 100%; margin-top: 25px; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .logout-btn:hover { background: #c82333; }
+        .dashboard-nav-btn { display: block; width: 100%; margin-top: 20px; padding: 12px; background: linear-gradient(45deg, #43cea2, #185a9d); color: white; border-radius: 8px; text-align: center; text-decoration: none; font-weight: bold; font-size: 14px; transition: 0.3s; }
+        .logout-btn { width: 100%; margin-top: auto; padding: 12px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
         /* MAIN DASHBOARD */
         .dashboard { flex: 1; padding: 40px; }
         h1 { text-align: center; color: white; margin-bottom: 30px; }
-        .card { background: rgb(240, 223, 195); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(219,107,2,0.169); margin-bottom: 25px; }
-        .card h2 { margin-bottom: 15px; }
-
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
-        input { padding: 10px; border-radius: 8px; border: 1px solid #1a1919; width: 100%; }
-        button { padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 10px; }
-        .primary-btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; transition: 0.3s; }
-        .primary-btn:hover { transform: scale(1.05); }
-        .cancel-btn { background: #6c757d; color: white; }
-        .delete-btn { background: #dc3545; color: white; }
-        .edit-btn   { background: #ffc107; color: #333; }
-        .reset-btn  { background: linear-gradient(45deg, #667eea, #764ba2); color: white; transition: 0.3s; }
-        .reset-btn:hover { background: #5a6268; transform: scale(1.05); }
-
-
-        /* TABLE */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #e1dede; }
+        .card { background: rgb(240, 223, 195); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 25px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; font-size: 14px; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .primary-btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; }
+        
+        /* TABLE & BUTTONS */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; color: #333; }
         th { background: #cd600c; color: white; }
-        tr:hover { background: #f9f9f9; }
-        .empty { text-align: center; color: gray; margin-top: 15px; }
-        .month-group-header td { background: #3a3060; color: white; font-weight: bold; font-size: 13px; padding: 8px 12px; letter-spacing: 0.5px; text-align: left; }
+        .edit-btn { background: #ffc107; color: #212529; padding: 6px 12px; font-size: 12px; border-radius: 4px; margin-right: 5px; }
+        .delete-btn { background: #ff4d4d; color: white; padding: 6px 12px; font-size: 12px; border-radius: 4px; }
 
-        .table-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-        .filter-box { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-        .filter-box input[type="text"] { width: 180px; }
-        .filter-box input[type="date"] { width: 150px; }
-        .filter-divider { width: 1px; background: #ccc; height: 30px; }
-        .filter-label { font-size: 12px; color: #888; font-weight: bold; text-transform: uppercase; letter-spacing: 0.4px; }
-        .active-filter-badge { background: #667eea; color: white; font-size: 12px; padding: 3px 10px; border-radius: 20px; font-weight: bold; }
-
-        /* PASSWORD EYE TOGGLE */
-        .pwd-wrap { position:relative; display:block; }
-        .pwd-wrap input { padding-right:40px !important; width:100% !important; background:white !important; color:#333 !important; font-size:14px !important; font-weight:normal !important; transform:none !important; box-shadow:none !important; }
-        .eye-btn { position:absolute !important; right:12px !important; top:50% !important; transform:translateY(-50%) !important; background:none !important; border:none !important; cursor:pointer !important; font-size:16px !important; color:#888 !important; padding:0 !important; margin:0 !important; line-height:1 !important; width:auto !important; box-shadow:none !important; }
-        .eye-btn:hover { color:#667eea !important; transform:translateY(-50%) !important; }
-
-        /* AUTH */
-        .auth-container { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 400px; margin: 40px auto; }
-        .auth-container h1 { text-align: center; color: #333; margin-bottom: 30px; font-size: 28px; }
-        .form-group { margin-bottom: 20px; }
-        .auth-container label { display: block; color: #333; font-weight: bold; margin-bottom: 8px; }
-        .auth-container input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; transition: 0.3s; }
-        .auth-container input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 5px rgba(102,126,234,0.5); }
-        .auth-container button { width: 100%; padding: 12px; background: linear-gradient(45deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; }
-        .auth-container button:hover { transform: scale(1.02); box-shadow: 0 5px 20px rgba(102,126,234,0.4); }
-        .toggle-text { text-align: center; margin-top: 20px; color: #666; }
-        .toggle-text a { color: #667eea; text-decoration: none; font-weight: bold; cursor: pointer; }
-        .toggle-text a:hover { text-decoration: underline; }
-        .message { text-align: center; margin-bottom: 20px; padding: 10px; border-radius: 8px; font-weight: bold; margin-top: 10px; }
-        .error   { background: #f8d7da; color: #721c24; }
+        /* AUTH CONTAINER */
+        .auth-container { 
+            background: white; 
+            padding: 35px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+            width: 100%; 
+            max-width: 420px; 
+        }
+        .form-group { margin-bottom: 25px; }
+        .pwd-wrap { position: relative; width: 100%; }
+        .pwd-wrap input { padding-right: 45px !important; }
+        .eye-btn { position: absolute !important; right: 10px !important; top: 50% !important; transform: translateY(-50%) !important; background: none !important; border: none !important; cursor: pointer !important; z-index: 10; width: auto !important; font-size: 18px; }
+        .toggle-text { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
+        .toggle-text a { color: #667eea; cursor: pointer; font-weight: bold; text-decoration: none; }
+        .message { padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; }
+        .error { background: #f8d7da; color: #721c24; }
         .success { background: #d4edda; color: #155724; }
+
+
+        .expense-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-start;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.input-box {
+    flex: 1;
+    min-width: 150px;
+}
+
+/* 1. Set a consistent color for the actual text/values */
+.input-box input, 
+.input-box select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    background: #ece3eb;
+    font-size: 14px;
+    /* Use a clear, solid color */
+    color: #555555 !important; 
+    opacity: 1 !important;
+}
+
+/* 2. Force the placeholders to match the text color exactly */
+.input-box input::placeholder {
+    color: #555555 !important;
+    opacity: 1 !important;
+}
+
+/* 3. Ensure the Date and Select dropdowns don't look faint */
+.input-box input[type="date"],
+.input-box select {
+    color: #555555;
+    /* This removes the default 'washed out' look in some browsers */
+    -webkit-appearance: none; 
+    appearance: none;
+    /* Add a custom arrow if needed, or keep default */
+}
+
+/* 4. Fix for the little calendar icon in the date picker */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    opacity: 0.6; /* Matches the icon darkness to the text */
+    cursor: pointer;
+}
+
+.category-wrapper input {
+    margin-top: 8px;
+    border-color: #6c5ce7; /* Highlight custom input */
+}
+
+.save-button {
+    background: #6c5ce7;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.save-button:hover {
+    background: #a29bfe;
+    transform: translateY(-2px);
+}
+
+
+
     </style>
 </head>
 <body>
 
-<!-- DASHBOARD SECTION -->
 <div id="dashboardSection" style="display:none;">
-<div class="layout">
-
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2>💰 ExpenseBuddy</h2>
-            <a href="profile.html" class="profile-icon-btn" id="profileIconBtn" title="My Profile">
-                <img id="sidebarAvatar" src="https://ui-avatars.com/api/?name=U&background=667eea&color=fff&size=40" id="sidebarAvatar" class="sidebar-avatar">
-            </a>
-        </div>
-        <div class="total-box">
-            Total Spent
-            <span id="currencySymbol">₹</span> <span id="totalAmount">0.00</span>
-        </div>
-        <a href="dashboard.html" class="dashboard-nav-btn">📊 View Dashboard</a>
-        <button class="logout-btn" onclick="logout()">Logout</button>
-    </div>
-
-    <!-- MAIN CONTENT -->
-    <div class="dashboard">
-        <h1>💸 Track your finances all with ease 💰</h1>
-
-        <!-- ADD EXPENSE CARD -->
-        <div class="card">
-            <h2>Add Expense</h2>
-            <input type="hidden" id="expense_id">
-            <div class="form-grid">
-                <input type="text"   id="title"    placeholder="Expense Title">
-                <input type="number" id="amount"   placeholder="Amount" step="0.01">
-                <input type="text"   id="category" placeholder="Category (e.g. Food, Travel, Medical)" list="categoryList">
-                <input type="date"   id="date">
+    <div class="layout">
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>💰 ExpenseBuddy</h2>
+                <a href="/profile.html"><img id="sidebarAvatar" src="" class="sidebar-avatar"></a>
             </div>
-            <datalist id="categoryList"></datalist>
-            <br>
-            <button class="primary-btn" onclick="saveExpense()">💾 Save Expense</button>
-            <button class="cancel-btn"  id="cancelBtn" style="display:none;" onclick="cancelEdit()">Cancel</button>
-            <div id="message" class="message"></div>
+            <div class="total-box">Total Spent <span id="currencySymbol">₹</span> <span id="totalAmount">0.00</span></div>
+            <a href="/dashboard.html" class="dashboard-nav-btn">📊 View Full Dashboard</a>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- EXPENSES TABLE CARD -->
-        <div class="card">
-            <div class="table-header">
-                <h2>Your Expenses</h2>
-                <div class="filter-box">
-                    <span class="filter-label">Category:</span>
-                    <input type="text" id="filterCategory" placeholder="e.g. Food, Travel">
-                    <div class="filter-divider"></div>
-                    <span class="filter-label">From:</span>
-                    <input type="date" id="filterStartDate">
-                    <span class="filter-label">To:</span>
-                    <input type="date" id="filterEndDate">
-                    <div class="filter-divider"></div>
-                    <div style="display:flex; gap:8px; align-items:center;">
-                        <button class="primary-btn" onclick="filterExpenses()">Apply</button>
-                        <button class="reset-btn" onclick="resetFilter()">Reset</button>
-                        <span id="filterBadge" style="display:none;" class="active-filter-badge">Filtered</span>
-                    </div>
+        <div class="dashboard">
+            <h1>💸Track your all expenses💸</h1>
+            <div class="card">
+                
+                <div class="add-expense-container">
+                <h3>Add New Expense</h3>
+    <form id="expenseForm" class="expense-form-row">
+        <div class="input-box">
+            <input type="text" id="title" placeholder="Title (e.g., Lunch)" required>
+        </div>
+
+        <div class="input-box">
+            <input type="number" id="amount" step="0.01" placeholder="Amount" required>
+        </div>
+
+        <div class="input-box category-wrapper">
+            <select id="categorySelect" onchange="toggleCustomCategory()">
+                <option value="">-- Category --</option>
+                <option value="Food">Food</option>
+                <option value="Travel">Travel</option>
+                <option value="Bills">Bills</option>
+                <option value="others">Others...</option>
+            </select>
+            <input type="text" id="customCategoryInput" placeholder="New Category Name" style="display: none;">
+        </div>
+
+        <div class="input-box">
+            <input type="date" id="date" required>
+        </div>
+
+        
+    </form>
+</div>
+                
+                <br>
+                <button class="primary-btn" type="button" onclick="saveExpense(event)" >💾 Save Expense</button>
+
+                <button id="cancelBtn" class="cancel-btn" style="display:none; width: 100px; background: #6c757d; color: white;" onclick="clearForm()">Cancel</button>
+            </div>
+            <div class="card">
+                <h2>History</h2>
+                <table>
+                    <thead><tr><th>Title</th><th>Amount</th><th>Category</th><th>Date</th><th>Action</th></tr></thead>
+                    <tbody id="expenseTable"></tbody>
+                </table>
+                <div id="emptyState" style="text-align:center; padding:30px; color:gray;">No expenses recorded yet.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="authSection">
+    <div class="auth-container">
+        <div id="loginForm">
+            <div style="text-align: center; font-size: 40px; margin-bottom: 20px;">🔐Login </div>
+            <div id="loginMessage"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="pwd-wrap">
+                    <input type="password" id="loginPassword" placeholder="Enter password">
+                    <button class="eye-btn" type="button" onclick="togglePwd('loginPassword', this)">👁️</button>
                 </div>
             </div>
-            <table>
-                <thead>
-                    <tr><th>Title</th><th>Amount</th><th>Category</th><th>Date</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="expenseTable"></tbody>
-            </table>
-            <div id="emptyState" class="empty">No expenses found</div>
+            <button class="primary-btn" style="width:100%; margin-top: 10px;" onclick="handleLogin()">Login</button>
+            <div class="toggle-text">Need an account? <a onclick="toggleForm()">Register</a></div>
         </div>
-    </div>
 
-</div>
-</div>
-
-<!-- AUTH SECTION -->
-<div id="authSection">
-<div class="auth-container">
-    <!-- LOGIN -->
-    <div id="loginForm">
-        <h1>🔐 Login</h1>
-        <div id="loginMessage"></div>
-        <div class="form-group">
-            <label>Enter your Registered Email:</label>
-            <input type="email" id="loginUsername" placeholder="Enter your email">
-        </div>
-        <div class="form-group">
-            <label>Password:</label>
-            <div class="pwd-wrap">
-                <input type="password" id="loginPassword" placeholder="Enter your password">
-                <button class="eye-btn" type="button" onclick="togglePwd('loginPassword', this)">👁️</button>
+        <div id="registerForm" style="display:none;">
+            <h1>📝 Register</h1>
+            <div id="registerMessage"></div>
+            <div class="form-group"><label>Username</label><input type="text" id="regUser"></div>
+            <div class="form-group"><label>Email</label><input type="email" id="regEmail"></div>
+            <div class="form-group">
+                <label>Currency</label>
+                <select id="regCurrency">
+                    <option value="INR">INR (₹)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                </select>
             </div>
-        </div>
-        <button onclick="handleLogin()">Login</button>
-        <div class="toggle-text"><a onclick="showForgotForm()">Forgot Password?</a></div>
-        <div class="toggle-text">Don't have an account? <a onclick="toggleForm()">Register here</a></div>
-    </div>
-    <!-- REGISTER -->
-    <div id="registerForm" style="display:none;">
-        <h1>📝 Register</h1>
-        <div id="registerMessage"></div>
-        <div class="form-group"><label>Username:</label><input type="text" id="registerUsername" placeholder="Choose a username"></div>
-        <div class="form-group"><label>Email:</label><input type="email" id="registerEmail" placeholder="Enter your email"></div>
-        <div class="form-group">
-            <label>Password:</label>
-            <div class="pwd-wrap">
-                <input type="password" id="registerPassword" placeholder="Choose a password">
-                <button class="eye-btn" type="button" onclick="togglePwd('registerPassword', this)">👁️</button>
-            </div>
-        </div>
-        <div class="form-group">
-            <label>Confirm Password:</label>
-            <div class="pwd-wrap">
-                <input type="password" id="confirmPassword" placeholder="Confirm your password">
-                <button class="eye-btn" type="button" onclick="togglePwd('confirmPassword', this)">👁️</button>
-            </div>
-        </div>
-        <button onclick="handleRegister()">Register</button>
-        <div class="toggle-text">Already have an account? <a onclick="toggleForm()">Login here</a></div>
-    </div>
-
-    <!-- FORGOT PASSWORD FORM -->
-    <div id="forgotForm" style="display:none;">
-        <h1>🔑 Forgot Password</h1>
-        <div id="forgotMessage"></div>
-        <div class="form-group">
-            <label>Email Address:</label>
-            <input type="email" id="forgotEmail" placeholder="Enter your registered email">
-        </div>
-        <button onclick="handleForgotPassword()">Send Reset Link</button>
-        <div class="toggle-text" style="margin-top:15px;">
-            <a onclick="showLoginForm()">← Back to Login</a>
+            <div class="form-group"><label>Password</label><div class="pwd-wrap"><input type="password" id="regPass"><button class="eye-btn" type="button" onclick="togglePwd('regPass', this)">👁️</button></div></div>
+            <div class="form-group"><label>Verify Password</label><div class="pwd-wrap"><input type="password" id="regVerify"><button class="eye-btn" type="button" onclick="togglePwd('regVerify', this)">👁️</button></div></div>
+            <button class="primary-btn" style="width:100%; margin-top: 10px;" onclick="handleRegister()">Sign Up</button>
+            <div class="toggle-text">Joined already? <a onclick="toggleForm()">Login</a></div>
         </div>
     </div>
-</div>
 </div>
 
 <script>
-// ── CATEGORY ICONS ─────────────────────────────────────────────
-const CATEGORY_KEYWORDS = [
-    { keywords: ["food","eat","restaurant","lunch","dinner","breakfast","snack","cafe","pizza","burger","biryani","chai"], icon: "🍔" },
-    { keywords: ["medical","doctor","medicine","hospital","health","pharmacy","clinic","dentist"],                        icon: "💊" },
-    { keywords: ["travel","trip","flight","hotel","tour","vacation","holiday","airbnb"],                                  icon: "✈️" },
-    { keywords: ["transport","cab","uber","ola","bus","train","petrol","fuel","auto","metro","rapido"],                   icon: "🚗" },
-    { keywords: ["shop","cloth","dress","amazon","flipkart","mall","fashion","apparel","meesho"],                         icon: "🛍️" },
-    { keywords: ["rent","house","home","electricity","water","bill","maintenance","wifi","internet","gas"],               icon: "🏠" },
-    { keywords: ["entertainment","movie","netflix","game","club","party","concert","sport","gym"],                        icon: "🎬" },
-    { keywords: ["education","course","book","school","college","fee","tuition","exam","coaching"],                       icon: "📚" },
-    { keywords: ["grocery","vegetable","fruit","supermarket","daily","kirana","bazar"],                                  icon: "🛒" },
-    { keywords: ["salary","income","freelance","bonus","payment"],                                                        icon: "💵" },
-];
-
-function getCategoryIcon(cat) {
-    const lower = (cat || "").toLowerCase();
-    for (const group of CATEGORY_KEYWORDS) {
-        if (group.keywords.some(k => lower.includes(k))) return group.icon;
+    if (typeof API_BASE === 'undefined') {
+        var API_BASE = window.location.origin;
     }
-    return "📌";
-}
 
-// ── AUTH ───────────────────────────────────────────────────────
-async function logout() {
-    try {
-        await fetch(`${API_BASE}/auth/jwt/logout`, {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-    } catch(e) { console.log(e); }
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("username");
-    localStorage.removeItem("currency");
-    showAuth();
-}
-
-function toggleForm() {
-    const login    = document.getElementById("loginForm");
-    const register = document.getElementById("registerForm");
-    if (login.style.display === "none") {
-        login.style.display    = "block";
-        register.style.display = "none";
-    } else {
-        login.style.display    = "none";
-        register.style.display = "block";
+    function toggleForm() {
+        document.getElementById("loginForm").style.display = (document.getElementById("loginForm").style.display === "none") ? "block" : "none";
+        document.getElementById("registerForm").style.display = (document.getElementById("registerForm").style.display === "none") ? "block" : "none";
     }
-}
 
-function showAuth() {
-    document.getElementById("authSection").style.display     = "block";
-    document.getElementById("dashboardSection").style.display = "none";
-    document.getElementById("loginForm").style.display       = "block";
-    document.getElementById("registerForm").style.display    = "none";
-}
+    function togglePwd(id, btn) {
+        const input = document.getElementById(id);
+        input.type = (input.type === "password") ? "text" : "password";
+        btn.textContent = (input.type === "password") ? "👁️" : "🙈";
+    }
 
-function showDashboard() {
-    document.getElementById("authSection").style.display     = "none";
-    document.getElementById("dashboardSection").style.display = "block";
-    updateCurrencySymbol();
-    loadSidebarProfile();
-    loadCategories();
-    loadExpenses();
-}
-
-function showMessage(el, msg, type) { el.textContent = msg; el.className = "message " + type; }
-
-async function handleLogin() {
-    const email    = document.getElementById("loginUsername").value.trim();
-    const password = document.getElementById("loginPassword").value;
-    const msgDiv   = document.getElementById("loginMessage");
-    if (!email || !password) { showMessage(msgDiv, "Please fill in all fields", "error"); return; }
-    try {
-        // FastAPI Users OAuth2 login — "username" field must contain the email
+    async function handleLogin() {
+        const msg = document.getElementById("loginMessage");
         const fd = new FormData();
-        fd.append("username", email);   // FastAPI Users uses email as username
-        fd.append("password", password);
-        const res = await fetch(`${API_BASE}/auth/jwt/login`, { method: "POST", body: fd });
-        if (res.ok) {
-            const data = await res.json();
-            localStorage.setItem("access_token", data.access_token);
-            localStorage.setItem("email", email);
-            showMessage(msgDiv, "Login successful!", "success");
-            setTimeout(() => showDashboard(), 1000);
-        } else {
-            const err = await res.json();
-            // FastAPI Users returns "detail: LOGIN_BAD_CREDENTIALS"
-            if (err.detail === "LOGIN_BAD_CREDENTIALS") {
-                showMessage(msgDiv, "Invalid email or password", "error");
-            } else {
-                showMessage(msgDiv, err.detail || "Login failed", "error");
-            }
-        }
-    } catch { showMessage(msgDiv, "Server not reachable", "error"); }
-}
-
-async function handleRegister() {
-    const username = document.getElementById("registerUsername").value.trim();
-    const email    = document.getElementById("registerEmail").value.trim();
-    const password = document.getElementById("registerPassword").value;
-    const confirm  = document.getElementById("confirmPassword").value;
-    const msgDiv   = document.getElementById("registerMessage");
-    if (!username || !email || !password || !confirm) { showMessage(msgDiv, "Please fill in all fields", "error"); return; }
-    if (password !== confirm) { showMessage(msgDiv, "Passwords do not match", "error"); return; }
-    if (password.length < 6)  { showMessage(msgDiv, "Password must be at least 6 characters", "error"); return; }
-    try {
-        const res = await fetch(`${API_BASE}/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ username, email, password })
-        });
-        if (res.ok) {
-            showMessage(msgDiv, "Registration successful! Please login.", "success");
-            ["registerUsername","registerEmail","registerPassword","confirmPassword"]
-                .forEach(id => document.getElementById(id).value = "");
-            setTimeout(() => toggleForm(), 1500);
-        } else {
-            const err = await res.json();
-            showMessage(msgDiv, err.detail || "Registration failed", "error");
-        }
-    } catch { showMessage(msgDiv, "Server not reachable", "error"); }
-}
-
-window.addEventListener("load", function () {
-    const token = localStorage.getItem("access_token");
-    if (token) showDashboard();
-    else showAuth();
-});
-
-// Update sidebar avatar if profile picture was changed on profile page
-window.addEventListener("storage", function(e) {
-    if (e.key === "profilePicUpdated" && e.newValue) {
-        const avatar = document.getElementById("sidebarAvatar");
-        if (avatar) avatar.src = e.newValue;
-    }
-});
-
-// Reload sidebar profile fresh from API when returning from profile.html
-window.addEventListener("focus", function() {
-    if (getToken()) loadSidebarProfile();
-});
-
-// ── SIDEBAR PROFILE ───────────────────────────────────────────
-async function loadSidebarProfile() {
-    try {
-        const res = await fetch(`${API_BASE}/profile`, {
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-        if (!res.ok) return;
-        const user = await res.json();
-        const avatar = document.getElementById("sidebarAvatar");
-
-        // Always fetch fresh from API — never rely on localStorage for the image
-        if (user.profile_picture) {
-            avatar.src = API_BASE + user.profile_picture + "?t=" + Date.now();
-        } else {
-            avatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=667eea&color=fff&size=40`;
-        }
-
-        // Sync currency
-        if (user.currency) {
-            localStorage.setItem("currency", user.currency);
-            updateCurrencySymbol();
-        }
-    } catch (err) { console.error(err); }
-}
-
-// ── EXPENSES ───
-function getToken() { return localStorage.getItem("access_token"); }
-
-// ── PASSWORD TOGGLE ───
-function togglePwd(inputId, btn) {
-    const input = document.getElementById(inputId);
-    if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-    } else {
-        input.type = "password";
-        btn.textContent = "👁️";
-    }
-}
-function getCurrency() { return localStorage.getItem("currency") || "₹"; }
-function updateCurrencySymbol() { document.getElementById("currencySymbol").textContent = getCurrency(); }
-
-async function loadExpenses() {
-    try {
-        const token = getToken();
-        if (!token) { alert("You must be logged in"); return; }
-        const res = await fetch(`${API_BASE}/expenses`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        if (!res.ok) { alert("Error fetching expenses"); return; }
-        const expenses = await res.json();
-        displayExpenses(expenses);
-    } catch (err) { console.error(err); }
-}
-
-function displayExpenses(expenses) {
-    const tableBody  = document.getElementById("expenseTable");
-    const emptyState = document.getElementById("emptyState");
-    tableBody.innerHTML = "";
-
-    if (expenses.length === 0) {
-        emptyState.style.display = "block";
-        document.getElementById("totalAmount").textContent = "0.00";
-        return;
-    }
-    emptyState.style.display = "none";
-
-    // Group by "YYYY-MM"
-    const groups = {};
-    expenses.forEach(exp => {
-        const key = exp.date ? exp.date.substring(0, 7) : "No Date";
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(exp);
-    });
-
-    // Sort groups newest month first
-    const sortedGroups = Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
-
-    let total = 0;
-    sortedGroups.forEach(([monthKey, exps]) => {
-        const label = monthKey !== "No Date"
-            ? new Date(monthKey + "-01").toLocaleString("default", { month: "long", year: "numeric" })
-            : "No Date";
-        const headerRow = document.createElement("tr");
-        headerRow.className = "month-group-header";
-        headerRow.innerHTML = `<td colspan="6">📅 ${label}</td>`;
-        tableBody.appendChild(headerRow);
-
-        exps.forEach(exp => {
-            total += exp.amount;
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${exp.title}</td>
-                <td>${getCurrency()}${exp.amount.toFixed(2)}</td>
-                <td>${getCategoryIcon(exp.category_name)} ${exp.category_name}</td>
-                <td>${exp.date}</td>
-                <td>
-                    <button class="edit-btn"   onclick="editExpense(${exp.id},'${exp.title}',${exp.amount},'${exp.category_name}','${exp.date}')">✏️ Edit</button>
-                    <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️ Delete</button>
-                </td>`;
-            tableBody.appendChild(row);
-        });
-    });
-
-    updateCurrencySymbol(); document.getElementById("totalAmount").textContent = total.toFixed(2);
-}
-
-async function saveExpense() {
-    const id       = document.getElementById("expense_id").value;
-    const title    = document.getElementById("title").value.trim();
-    const amount   = parseFloat(document.getElementById("amount").value);
-    const category = document.getElementById("category").value.trim();
-    const date     = document.getElementById("date").value;
-    if (!title || !amount || !category) { alert("Please fill in all fields"); return; }
-    if (id) await updateExpense(parseInt(id), title, amount, category, date);
-    else    await addExpense(title, amount, category, date);
-}
-
-async function addExpense(title, amount, category, date) {
-    try {
-        const res = await fetch(`${API_BASE}/expenses`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
-            body: JSON.stringify({ title, amount, category_name: category, date: date || null })
-        });
-        if (res.ok) { clearForm(); loadExpenses(); }
-        else { const e = await res.json(); alert("Error: " + JSON.stringify(e.detail)); }
-    } catch { alert("Server not reachable"); }
-}
-
-async function updateExpense(id, title, amount, category, date) {
-    try {
-        const res = await fetch(`${API_BASE}/expenses/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
-            body: JSON.stringify({ title, amount, category_name: category, date: date || null })
-        });
-        if (res.ok) { clearForm(); loadExpenses(); }
-        else { const e = await res.json(); alert("Error: " + JSON.stringify(e.detail)); }
-    } catch { alert("Server not reachable"); }
-}
-
-async function deleteExpense(id) {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
-    try {
-        const res = await fetch(`${API_BASE}/expenses/${id}`, {
-            method: "DELETE",
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-        if (res.ok) loadExpenses();
-        else alert("Error deleting expense");
-    } catch { alert("Server not reachable"); }
-}
-
-function editExpense(id, title, amount, category, date) {
-    document.getElementById("expense_id").value = id;
-    document.getElementById("title").value      = title;
-    document.getElementById("amount").value     = amount;
-    document.getElementById("category").value   = category;
-    document.getElementById("date").value       = date;
-    document.getElementById("cancelBtn").style.display = "inline-block";
-    window.scrollTo(0, 0);
-}
-
-function clearForm() {
-    ["expense_id","title","amount","category","date"].forEach(id => document.getElementById(id).value = "");
-    document.getElementById("message").textContent     = "";
-    document.getElementById("cancelBtn").style.display = "none";
-}
-
-function cancelEdit() { clearForm(); }
-
-function resetFilter() {
-    document.getElementById("filterCategory").value  = "";
-    document.getElementById("filterStartDate").value = "";
-    document.getElementById("filterEndDate").value   = "";
-    document.getElementById("filterBadge").style.display = "none";
-    loadExpenses();
-}
-
-async function filterExpenses() {
-    const category  = document.getElementById("filterCategory").value.trim().toLowerCase();
-    const startDate = document.getElementById("filterStartDate").value;
-    const endDate   = document.getElementById("filterEndDate").value;
-
-    // If nothing is filled, just load all
-    if (!category && !startDate && !endDate) { loadExpenses(); return; }
-
-    // Validate date range
-    if (startDate && endDate && startDate > endDate) {
-        alert("Start date cannot be after end date.");
-        return;
+        fd.append("username", document.getElementById("loginEmail").value);
+        fd.append("password", document.getElementById("loginPassword").value);
+        try {
+            const res = await fetch(`${API_BASE}/auth/jwt/login`, { method: "POST", body: fd });
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem("access_token", data.access_token);
+                location.reload();
+            } else { msg.textContent = "Invalid Email or Password"; msg.className = "message error"; }
+        } catch (e) { msg.textContent = "Server Error"; msg.className = "message error"; }
     }
 
-    try {
-        const res = await fetch(`${API_BASE}/expenses`, {
-            headers: { "Authorization": `Bearer ${getToken()}` }
-        });
-        if (!res.ok) { alert("Error fetching expenses"); return; }
-        const all = await res.json();
-
-        const filtered = all.filter(exp => {
-            const matchCat   = category  ? exp.category_name.toLowerCase().includes(category) : true;
-            const matchStart = startDate ? exp.date >= startDate : true;
-            const matchEnd   = endDate   ? exp.date <= endDate   : true;
-            return matchCat && matchStart && matchEnd;
-        });
-
-        // Show filter badge
-        document.getElementById("filterBadge").style.display = "inline-block";
-
-        const tableBody  = document.getElementById("expenseTable");
-        const emptyState = document.getElementById("emptyState");
-        tableBody.innerHTML = "";
-
-        if (filtered.length === 0) {
-            emptyState.style.display = "block";
-            emptyState.textContent   = "No expenses found for the selected filters.";
-            document.getElementById("totalAmount").textContent = "0.00";
-            return;
+    async function handleRegister() {
+        const msg = document.getElementById("registerMessage");
+        const pass = document.getElementById("regPass").value;
+        if (pass !== document.getElementById("regVerify").value) {
+            msg.textContent = "Passwords do not match!"; msg.className = "message error"; return;
         }
-        emptyState.style.display = "none";
-        emptyState.textContent   = "No expenses found";
-
-        // Group filtered expenses by month, newest first
-        const groups = {};
-        filtered.forEach(exp => {
-            const key = exp.date ? exp.date.substring(0, 7) : "No Date";
-            if (!groups[key]) groups[key] = [];
-            groups[key].push(exp);
-        });
-        const sortedGroups = Object.entries(groups).sort((a, b) => b[0].localeCompare(a[0]));
-
-        let total = 0;
-        sortedGroups.forEach(([monthKey, exps]) => {
-            const label = monthKey !== "No Date"
-                ? new Date(monthKey + "-01").toLocaleString("default", { month: "long", year: "numeric" })
-                : "No Date";
-            const headerRow = document.createElement("tr");
-            headerRow.className = "month-group-header";
-            headerRow.innerHTML = `<td colspan="5">📅 ${label}</td>`;
-            tableBody.appendChild(headerRow);
-
-            exps.forEach(exp => {
-                total += exp.amount;
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td>${exp.title}</td>
-                    <td>₹${exp.amount.toFixed(2)}</td>
-                    <td>${getCategoryIcon(exp.category_name)} ${exp.category_name}</td>
-                    <td>${exp.date}</td>
-                    <td>
-                        <button class="edit-btn"   onclick="editExpense(${exp.id},'${exp.title}',${exp.amount},'${exp.category_name}','${exp.date}')">✏️ Edit</button>
-                        <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️ Delete</button>
-                    </td>`;
-                tableBody.appendChild(row);
+        const payload = {
+            username: document.getElementById("regUser").value,
+            email: document.getElementById("regEmail").value,
+            password: pass,
+            currency: document.getElementById("regCurrency").value,
+            is_active: true, is_superuser: false, is_verified: false
+        };
+        try {
+            const res = await fetch(`${API_BASE}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
-        });
-        updateCurrencySymbol(); document.getElementById("totalAmount").textContent = total.toFixed(2);
-    } catch (err) { console.error(err); }
-}
-// ── FORGOT PASSWORD ────────────────────────────────────────────
-function showForgotForm() {
-    document.getElementById("loginForm").style.display    = "none";
-    document.getElementById("registerForm").style.display = "none";
-    document.getElementById("forgotForm").style.display   = "block";
-    document.getElementById("forgotMessage").textContent  = "";
-    document.getElementById("forgotEmail").value          = "";
-}
-
-function showLoginForm() {
-    document.getElementById("loginForm").style.display    = "block";
-    document.getElementById("registerForm").style.display = "none";
-    document.getElementById("forgotForm").style.display   = "none";
-}
-
-async function handleForgotPassword() {
-    const email  = document.getElementById("forgotEmail").value.trim();
-    const msgDiv = document.getElementById("forgotMessage");
-
-    if (!email) {
-        msgDiv.textContent = "Please enter your email address";
-        msgDiv.className   = "message error";
-        return;
+            if (res.ok) {
+                msg.textContent = "Success! Please login."; msg.className = "message success";
+                setTimeout(toggleForm, 1500);
+            } else { msg.textContent = "This email is already registered"; msg.className = "message error"; }
+        } catch (e) { msg.textContent = "Server Error"; msg.className = "message error"; }
     }
 
-    try {
-        const res  = await fetch(`${API_BASE}/auth/forgot-password`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email })
-        });
-        const data = await res.json();
-        msgDiv.textContent = "✅ " + data.message;
-        msgDiv.className   = "message success";
-    } catch {
-        msgDiv.textContent = "Server not reachable. Please try again.";
-        msgDiv.className   = "message error";
-    }
-}
+    function logout() { localStorage.clear(); location.reload(); }
 
+    window.onload = async () => {
+        const token = localStorage.getItem("access_token");
+        if (token) {
+            // Adjust body flex for dashboard view
+            document.body.style.display = "block"; 
+            document.getElementById("authSection").style.display = "none";
+            document.getElementById("dashboardSection").style.display = "block";
+            
+            const res = await fetch(`${API_BASE}/auth/users/me`, { headers: { "Authorization": `Bearer ${token}` } });
+            if (res.ok) {
+                const user = await res.json();
+                const symbols = {"INR":"₹", "USD":"$", "EUR":"€", "GBP":"£"};
+                const sym = symbols[user.currency] || "₹";
+                document.getElementById("currencySymbol").textContent = sym;
+                localStorage.setItem("currency_symbol", sym);
+                document.getElementById("sidebarAvatar").src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=667eea&color=fff`;
+                
+                if (typeof loadExpenses === "function") loadExpenses();
+                if (typeof loadCategories === "function") loadCategories();
+            } else { logout(); }
+        }
+    };
 </script>
+
+<script src="/static/script.js"></script>
 </body>
 </html>

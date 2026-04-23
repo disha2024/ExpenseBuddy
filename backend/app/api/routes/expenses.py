@@ -49,56 +49,53 @@ async def get_or_create_category(session: AsyncSession, name: str, user_id) -> C
     return category
 
 
-# ── CREATE EXPENSE ─────────────────────────────────────────────
-@router.post("", response_model=ExpenseResponse)
+#CREATE EXPENSE 
+from app.models.models import Category, Expense # Ensure these are imported
+
+@router.post("")
 async def create_expense(
-    expense: ExpenseCreate,
-    session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user)
+    expense_in: ExpenseCreate,
+    user: User = Depends(current_active_user),
+    session: AsyncSession = Depends(get_async_session)
 ):
-    user_id = current_user.id
-    clean_name = expense.category_name.strip().lower()
-
     try:
-        category = await get_or_create_category(session, clean_name, user_id)
+        # 1. Clean the category name (remove extra spaces)
+        cat_name = expense_in.category_name.strip()
 
+        # 2. Check if this category already exists for THIS user
+        statement = select(Category).where(
+            Category.name == cat_name,
+            Category.user_id == user.id
+        )
+        result = await session.execute(statement)
+        category = result.scalars().first()
+
+        # 3. If it doesn't exist, create it on the fly!
         if not category:
-            raise HTTPException(status_code=500, detail="Category could not be retrieved or created.")
+            category = Category(name=cat_name, user_id=user.id)
+            session.add(category)
+            await session.flush() # This populates category.id without committing yet
 
-        # Capture plain values before any further awaits
-        category_id = category.id
-        category_name = category.name
-
+        # 4. Create the expense using the ID we just found or created
         new_expense = Expense(
-            title=expense.title,
-            amount=expense.amount,
-            category_id=category_id,
-            date=expense.date if expense.date else date.today(),
-            user_id=user_id
+            title=expense_in.title,
+            amount=expense_in.get_amount_in_subunits(), # Uses your schema helper!
+            category_id=category.id,
+            user_id=user.id,
+            date=expense_in.date or datetime.now().date()
         )
 
         session.add(new_expense)
         await session.commit()
         await session.refresh(new_expense)
+        
+        return new_expense
 
-        return ExpenseResponse(
-            id=new_expense.id,
-            title=new_expense.title,
-            amount=new_expense.amount,
-            category_name=category_name,
-            date=new_expense.date
-        )
-
-    except HTTPException:
-        raise
     except Exception as e:
         await session.rollback()
-        print(f"❌ Error in create_expense: {str(e)}")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
-
-# ── GET EXPENSES ───────────────────────────────────────────────
+# ── GET EXPENSES 
 @router.get("", response_model=List[ExpenseResponse])
 async def get_expenses(
     session: AsyncSession = Depends(get_async_session),
@@ -129,7 +126,7 @@ async def get_expenses(
         raise HTTPException(status_code=500, detail=f"Error fetching expenses: {str(e)}")
 
 
-# ── UPDATE EXPENSE ─────────────────────────────────────────────
+#UPDATE EXPENSE
 @router.put("/{expense_id}", response_model=ExpenseResponse)
 async def update_expense(
     expense_id: int,
@@ -198,34 +195,43 @@ async def update_expense(
         raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 
-# ── DELETE EXPENSE ─────────────────────────────────────────────
+#DELETE EXPENSE 
 @router.delete("/{expense_id}")
 async def delete_expense(
-    expense_id: int,
+    expense_id: int, 
     session: AsyncSession = Depends(get_async_session),
-    current_user: User = Depends(current_active_user)
+    user: User = Depends(current_active_user)
 ):
-    try:
-        result = await session.execute(
-            select(Expense).where(
-                Expense.id == expense_id,
-                Expense.user_id == current_user.id
-            )
-        )
-        expense = result.scalar_one_or_none()
+    # 1. Fetch the expense
+    result = await session.execute(
+        select(Expense).where(Expense.id == expense_id, Expense.user_id == user.id)
+    )
+    expense = result.scalar_one_or_none()
 
-        if not expense:
-            raise HTTPException(status_code=404, detail="Expense not found")
+    if not expense:
+        raise HTTPException(status_code=404, detail="Expense not found")
 
-        await session.delete(expense)
-        await session.commit()
+    # 2. Mark for deletion
+    await session.delete(expense)
+    
+    # 3. SAVE THE CHANGE TO MYSQL (If you miss this, it won't delete!)
+    await session.commit() 
+    
+    return {"message": "Deleted successfully"}
 
-        return {"message": "Expense deleted"}
+@router.delete("/categories/{category_id}")
+async def delete_category(
+    category_id: int, 
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user)
+):
+    statement = select(Category).where(Category.id == category_id, Category.user_id == user.id)
+    result = await session.execute(statement)
+    category = result.scalar_one_or_none()
 
-    except HTTPException:
-        raise
-    except Exception as e:
-        await session.rollback()
-        print(f"❌ Error in delete_expense: {str(e)}")
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
+    if not category:
+        raise HTTPException(status_code=404, detail="Category not found")
+
+    await session.delete(category)
+    await session.commit()
+    return {"message": "Category deleted. Linked expenses are now 'Uncategorized'."}

@@ -63,13 +63,13 @@ auth_backend = AuthenticationBackend(
 )
 
 
-# ── FASTAPI USERS INSTANCE ─────────────────────────────────────
+# ── FASTAPI USERS INSTANCE 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
     [auth_backend],
 )
 
 
-# ── CURRENT USER HELPERS ───────────────────────────────────────
+# ── CURRENT USER HELPERS
 current_active_user = fastapi_users.current_user(active=True)
 current_active_verified_user = fastapi_users.current_user(active=True, verified=True)
