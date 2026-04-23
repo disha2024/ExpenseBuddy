@@ -1,8 +1,9 @@
-=<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
     <title>ExpenseBuddy — Profile</title>
     <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
         body { background: linear-gradient(135deg, #1f1c2c, #928dab); min-height:100vh; }
@@ -27,46 +28,106 @@
         .card { background:rgb(240,223,195); padding:25px; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.2); margin-bottom:25px; }
         .card h3 { margin-bottom:18px; color:#333; font-size:16px; border-bottom:2px solid #cd600c; padding-bottom:8px; }
 
-        /* AVATAR */
+        /* --- THE PERFECT CIRCLE SECTION --- */
         .avatar-section { text-align:center; }
-        .avatar-wrap { position:relative; display:inline-block; margin-bottom:15px; }
-        .avatar { width:120px; height:120px; border-radius:50%; object-fit:cover; border:4px solid #cd600c; background:#ddd; cursor: pointer; }
-        .avatar-overlay { position:absolute; bottom:0; right:0; background:#cd600c; color:white; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; border:2px solid white; transition:0.3s; }
-        .avatar-overlay:hover { background:#a04800; }
-        #avatarInput { display:none; }
+        
+        .avatar-wrap { 
+            position:relative; 
+            display:inline-block; 
+            margin-bottom:15px; 
+            width: 150px; 
+            height: 150px; 
+        }
+
+        .profile-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 4px solid #cd600c;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            background: #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-circle img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Hover Overlay */
+        .upload-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: 0.3s;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .profile-circle:hover .upload-overlay {
+            opacity: 1;
+        }
+
+        /* The Edit Icon (Pencil) */
+        .avatar-edit-badge {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: #cd600c;
+            color: white;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 3px solid rgb(240, 223, 195);
+            z-index: 10;
+            transition: 0.2s;
+        }
+
+        .avatar-edit-badge:hover { transform: scale(1.1); background: #a04800; }
 
         /* DROPDOWN MENU */
-        .avatar-menu { position:absolute; bottom:-110px; left:50%; transform:translateX(-50%); background:white; border-radius:10px; box-shadow:0 8px 25px rgba(0,0,0,0.2); overflow:hidden; z-index:100; min-width:200px; display:none; }
+        .avatar-menu { position:absolute; bottom:-120px; left:50%; transform:translateX(-50%); background:white; border-radius:10px; box-shadow:0 8px 25px rgba(0,0,0,0.2); overflow:hidden; z-index:100; min-width:180px; display:none; }
         .avatar-menu.open { display:block; }
         .avatar-menu-item { padding:12px 18px; font-size:14px; font-weight:bold; cursor:pointer; display:flex; align-items:center; gap:10px; color:#333; transition:0.2s; border-bottom: 1px solid #eee; }
-        .avatar-menu-item:last-child { border-bottom: none; }
-        .avatar-menu-item:hover { background:#f0f0ff; color:#667eea; }
+        .avatar-menu-item:hover { background: #f8f9fa; color: #cd600c; }
 
-        /* USER TEXT */
-        .user-name  { font-size:20px; font-weight:bold; color:#333; }
-        .user-email { font-size:13px; color:#888; margin-top:4px; }
-        .joined-date { margin-top:10px; font-size:12px; color:#eee; background:#3a3060; padding:6px 12px; border-radius:20px; display:inline-block; }
+        /* TEXT STYLES */
+        .user-name  { font-size:22px; font-weight:bold; color:#333; margin-top: 10px; }
+        .user-email { font-size:14px; color:#666; margin-bottom: 12px; }
+        .joined-date { font-size:12px; color:#fff; background:#3a3060; padding:6px 15px; border-radius:20px; display:inline-block; }
 
-        /* FORM */
+        /* FORM STYLES */
         .form-group { margin-bottom:15px; }
-        .form-group label { display:block; font-size:13px; font-weight:bold; color:#555; margin-bottom:6px; text-transform:uppercase; }
-        .form-group input { width:100%; padding:10px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; }
-        .save-btn { padding:10px 24px; background:linear-gradient(45deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; }
+        .form-group label { display:block; font-size:12px; font-weight:bold; color:#555; margin-bottom:6px; text-transform:uppercase; }
+        .form-group input { width:100%; padding:11px 14px; border:1px solid #ddd; border-radius:8px; font-size:14px; }
+        .save-btn { padding:12px 24px; background:linear-gradient(45deg,#667eea,#764ba2); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold; width: 100%; transition: 0.3s; }
+        .save-btn:hover { opacity: 0.9; }
 
-        /* INFO ROW */
-        .info-row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #e5d5c0; font-size:14px; }
-        .info-label { color:#888; }
+        .info-row { display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #e5d5c0; font-size:14px; }
+        .info-label { color:#777; }
         .info-value { font-weight:bold; color:#333; }
 
-        /* MESSAGES */
         .msg { padding:10px; border-radius:8px; font-size:13px; font-weight:bold; margin-top:12px; text-align:center; display:none; }
         .msg.success { background:#d4edda; color:#155724; display:block; }
         .msg.error   { background:#f8d7da; color:#721c24; display:block; }
 
-        /* MODAL */
-        .img-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:999; align-items:center; justify-content:center; }
+        .img-modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:999; align-items:center; justify-content:center; }
         .img-modal.open { display:flex; }
-        .img-modal img { max-width:90vw; max-height:90vh; border-radius:12px; border:4px solid white; }
+        .img-modal img { max-width:85vw; max-height:85vh; border-radius:10px; border:3px solid white; }
 
         @media(max-width:900px) { .profile-grid { grid-template-columns:1fr; } }
     </style>
@@ -94,21 +155,29 @@
                     <h3>Profile Picture</h3>
                     <div class="avatar-section">
                         <div class="avatar-wrap">
-                            <img id="avatarImg" src="" class="avatar" onclick="toggleAvatarMenu()">
-                            <div class="avatar-overlay" onclick="toggleAvatarMenu()">✏️</div>
-                            <input type="file" id="avatarInput" accept="image/*" onchange="upload_picture(event)">
+                            <div class="profile-circle" onclick="toggleAvatarMenu()">
+                                <img id="avatarImg" src="" alt="Profile">
+                                <div class="upload-overlay">Click to Edit</div>
+                            </div>
                             
+                            <div class="avatar-edit-badge" onclick="toggleAvatarMenu()">
+                                <i class="fas fa-pencil-alt"></i>
+                            </div>
+
                             <div class="avatar-menu" id="avatarMenu">
                                 <div class="avatar-menu-item" onclick="viewProfilePicture()">🔍 View Picture</div>
                                 <div class="avatar-menu-item" onclick="triggerUpload()">📤 Upload New</div>
                                 <div class="avatar-menu-item" onclick="removeProfilePicture()" style="color:#dc3545;">🗑️ Remove</div>
                             </div>
+
+                            <input type="file" id="avatarInput" accept="image/*" onchange="upload_picture(event)" style="display: none;">
                         </div>
+
                         <div class="user-name" id="displayName">—</div>
                         <div class="user-email" id="displayEmail">—</div>
                         <div class="joined-date" id="displayJoined">Joined —</div>
+                        <div id="avatarMsg" class="msg"></div>
                     </div>
-                    <div id="avatarMsg" class="msg"></div>
                 </div>
 
                 <div class="card">
@@ -122,12 +191,32 @@
 
             <div>
                 <div class="card">
-                    <h3>✏️ Update Profile</h3>
-                    <div class="form-group"><label>Username</label><input type="text" id="editUsername"></div>
-                    <div class="form-group"><label>Email</label><input type="email" id="editEmail"></div>
-                    <button class="save-btn" onclick="updateProfile()">💾 Save Changes</button>
-                    <div id="profileMsg" class="msg"></div>
-                </div>
+    <h3>✏️ Update Profile</h3>
+    
+    <div class="form-group">
+        <label>Username</label>
+        <input type="text" id="editUsername">
+    </div>
+    
+    <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="editEmail">
+    </div>
+
+    <div class="form-group">
+        <label>Currency</label>
+        <select id="editCurrency" style="width:100%; padding:11px 14px; border:1px solid #ddd; border-radius:8px;">
+            <option value="INR">INR (₹)</option>
+            <option value="USD">USD ($)</option>
+            <option value="EUR">EUR (€)</option>
+            <option value="GBP">GBP (£)</option>
+        </select>
+        <small id="currencyHint" style="color: #cd600c; display: none; font-size: 11px; margin-top: 5px;"></small>
+    </div>
+
+    <button class="save-btn" onclick="updateProfile()">💾 Save Changes</button>
+    <div id="profileMsg" class="msg"></div>
+</div>
 
                 <div class="card">
                     <h3>🔒 Change Password</h3>
@@ -142,7 +231,6 @@
                     <h3 style="color: #dc3545; border-bottom: 2px solid #dc3545;">⚠️ Danger Zone</h3>
                     <p style="font-size: 13px; color: #666; margin-bottom: 15px;">Permanent action: deleting your account wipes all records.</p>
                     <button class="logout-btn" style="margin-top: 0; background: #dc3545;" onclick="confirmDeleteAccount()">🗑️ Delete My Account</button>
-                    <div id="deleteMsg" class="msg"></div>
                 </div>
             </div>
         </div>
@@ -167,106 +255,131 @@ function showMsg(id, text, type) {
     setTimeout(() => { el.className = "msg"; el.textContent = ""; }, 3500);
 }
 
+// TOGGLE MENU LOGIC
+function toggleAvatarMenu() { 
+    document.getElementById("avatarMenu").classList.toggle("open"); 
+}
+
+function triggerUpload() { 
+    document.getElementById("avatarInput").click(); 
+    document.getElementById("avatarMenu").classList.remove("open");
+}
+
+// PROFILE PICTURE PREVIEW & UPLOAD
+async function upload_picture(event) {
+    const file = event.target.files;
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch(`${API_BASE}/profile/picture`, {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${getToken()}` },
+            body: formData
+        });
+
+        if (res.ok) {
+            showMsg("avatarMsg", "Updated successfully!", "success");
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showMsg("avatarMsg", "Upload failed", "error");
+        }
+    } catch (e) {
+        console.error("Upload error:", e);
+    }
+}
+
 async function loadProfile() {
     const token = getToken();
     if (!token) return logout();
+
     try {
-        const res = await fetch(`${API_BASE}/profile`, { headers: { "Authorization": `Bearer ${token}` } });
-        if (!res.ok) throw new Error("Failed to load profile");
-        const user = await res.json();
-        
-        // Cache buster to ensure the image refreshes
-        const t = new Date().getTime();
-        
-        if (user.profile_picture) {
-            // Fix path construction
-            const path = user.profile_picture.startsWith('/') ? user.profile_picture : '/' + user.profile_picture;
-            document.getElementById("avatarImg").src = API_BASE + path + `?t=${t}`;
+        // 1. Fetch Profile and Expenses
+        const [userRes, expenseRes] = await Promise.all([
+            fetch(`${API_BASE}/profile`, { headers: { "Authorization": `Bearer ${token}` } }),
+            fetch(`${API_BASE}/expenses`, { headers: { "Authorization": `Bearer ${token}` } })
+        ]);
+
+        const user = await userRes.json();
+        const expenses = await expenseRes.json();
+
+        // ... (Keep your existing avatar and text update code here) ...
+
+        // 2. Currency Locking Logic
+        const currencySelect = document.getElementById("editCurrency");
+        const currencyHint = document.getElementById("currencyHint");
+
+        currencySelect.value = user.currency || "INR";
+
+        if (expenses.length > 0) {
+            currencySelect.disabled = true;
+            currencySelect.style.backgroundColor = "#f0f0f0";
+            currencySelect.style.cursor = "not-allowed";
+            currencyHint.style.display = "block";
+            currencyHint.innerHTML = "🔒 Locked: Clear all expenses to change currency.";
         } else {
-            document.getElementById("avatarImg").src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=667eea&color=fff`;
+            currencySelect.disabled = false;
+            currencySelect.style.backgroundColor = "#fff";
+            currencyHint.style.display = "none";
         }
 
-        document.getElementById("displayName").textContent = user.username;
-        document.getElementById("displayEmail").textContent = user.email;
-        
-        const joined = user.joined_at ? new Date(user.joined_at).toLocaleDateString("en-IN", { day:"numeric", month:"long", year:"numeric" }) : "—";
-        document.getElementById("displayJoined").textContent = `Joined ${joined}`;
-        document.getElementById("infoUsername").textContent = user.username;
-        document.getElementById("infoEmail").textContent = user.email;
-        document.getElementById("infoCurrency").textContent = user.currency || "INR";
-        document.getElementById("infoJoined").textContent = joined;
-        document.getElementById("editUsername").value = user.username;
-        document.getElementById("editEmail").value = user.email;
-        
-        loadSidebarTotal(user.currency || "INR");
-    } catch (e) { console.error(e); logout(); }
+    } catch (e) { console.error("Load error:", e); }
 }
 
 async function loadSidebarTotal(curCode) {
-    const symbols = {"INR":"₹", "USD":"$", "EUR":"€", "GBP":"£", "JPY":"¥"};
+    const symbols = {"INR":"₹", "USD":"$", "EUR":"€", "GBP":"£"};
     const sym = symbols[curCode] || "₹";
     const res = await fetch(`${API_BASE}/expenses`, { headers: { "Authorization": `Bearer ${getToken()}` } });
     if (res.ok) {
         const data = await res.json();
-        // Lowest Denomination Fix: Divide by 100
         const total = data.reduce((s, e) => s + (e.amount || 0), 0) / 100;
         document.getElementById("sidebarTotal").textContent = `${sym}${total.toFixed(2)}`;
     }
 }
 
-async function upload_picture(e) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-    
-    const file = files; // Fix: select the first file
-    const formData = new FormData();
-    formData.append("file", file); // Must match 'file: UploadFile' in profile.py
+async function updateProfile() {
+    const username = document.getElementById("editUsername").value;
+    const email = document.getElementById("editEmail").value;
+    const currency = document.getElementById("editCurrency").value;
 
-    try {
-        const res = await fetch(`${API_BASE}/profile/picture`, { 
-            method: "POST", 
-            headers: { "Authorization": `Bearer ${getToken()}` }, 
-            body: formData 
-        });
-        
-        if (res.ok) { 
-            showMsg("avatarMsg", "Updated Successfully!", "success");
-            // Reload profile data to refresh the image
-            setTimeout(loadProfile, 500); 
-        } else {
-            const err = await res.json();
-            console.error("422 Details:", err);
-            showMsg("avatarMsg", "Upload failed. Check console for details.", "error");
-        }
-    } catch (err) { 
-        showMsg("avatarMsg", "Server error", "error"); 
+    const res = await fetch(`${API_BASE}/profile`, {
+        method: "PUT",
+        headers: { 
+            "Content-Type": "application/json", 
+            "Authorization": `Bearer ${getToken()}` 
+        },
+        body: JSON.stringify({ 
+            username, 
+            email, 
+            currency: currency // Will only be processed by backend if expense count is 0
+        })
+    });
+
+    if (res.ok) { 
+        showMsg("profileMsg", "Profile updated!", "success"); 
+        loadProfile(); 
+    } else {
+        const err = await res.json();
+        showMsg("profileMsg", err.detail || "Update failed", "error");
     }
 }
 
 async function removeProfilePicture() {
-    if (!confirm("Remove profile picture?")) return;
-    const res = await fetch(`${API_BASE}/profile/picture`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
-    if (res.ok) { loadProfile(); showMsg("avatarMsg", "Removed!", "success"); }
-}
-
-async function updateProfile() {
-    const username = document.getElementById("editUsername").value;
-    const email = document.getElementById("editEmail").value;
-    const res = await fetch(`${API_BASE}/profile`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${getToken()}` },
-        body: JSON.stringify({ username, email })
+    if (!confirm("Delete profile picture?")) return;
+    const res = await fetch(`${API_BASE}/profile/picture`, { 
+        method: "DELETE", 
+        headers: { "Authorization": `Bearer ${getToken()}` } 
     });
-    if (res.ok) { showMsg("profileMsg", "Changes saved!", "success"); loadProfile(); }
-    else showMsg("profileMsg", "Error updating profile", "error");
+    if (res.ok) location.reload();
 }
 
 async function changePassword() {
     const current = document.getElementById("currentPassword").value;
     const newPass = document.getElementById("newPassword").value;
     const confirmPass = document.getElementById("confirmNewPassword").value;
-
-    if(newPass !== confirmPass) return showMsg("passwordMsg", "New passwords don't match!", "error");
+    if(newPass !== confirmPass) return showMsg("passwordMsg", "Passwords don't match", "error");
 
     const res = await fetch(`${API_BASE}/profile/password`, {
         method: "PUT",
@@ -274,33 +387,31 @@ async function changePassword() {
         body: JSON.stringify({ current_password: current, new_password: newPass })
     });
     if (res.ok) {
-        showMsg("passwordMsg", "Password updated!", "success");
-        document.getElementById("currentPassword").value = "";
-        document.getElementById("newPassword").value = "";
-        document.getElementById("confirmNewPassword").value = "";
-    } else {
-        const err = await res.json();
-        showMsg("passwordMsg", err.detail || "Incorrect current password", "error");
-    }
+        showMsg("passwordMsg", "Success!", "success");
+        document.querySelectorAll('input[type="password"]').forEach(i => i.value = "");
+    } else showMsg("passwordMsg", "Incorrect current password", "error");
 }
 
 async function confirmDeleteAccount() {
-    if (confirm("Delete account permanently? This cannot be undone.")) {
-        const res = await fetch(`${API_BASE}/profile/delete`, { method: "DELETE", headers: { "Authorization": `Bearer ${getToken()}` } });
-        if (res.ok) { alert("Account deleted."); logout(); }
+    if (confirm("Permanently delete account?")) {
+        const res = await fetch(`${API_BASE}/profile/delete`, { 
+            method: "DELETE", 
+            headers: { "Authorization": `Bearer ${getToken()}` } 
+        });
+        if (res.ok) logout();
     }
 }
 
-function toggleAvatarMenu() { document.getElementById("avatarMenu").classList.toggle("open"); }
-function triggerUpload() { document.getElementById("avatarInput").click(); toggleAvatarMenu(); }
-function viewProfilePicture() { document.getElementById("modalImg").src = document.getElementById("avatarImg").src; document.getElementById("imgModal").classList.add("open"); toggleAvatarMenu(); }
+function viewProfilePicture() {
+    document.getElementById("modalImg").src = document.getElementById("avatarImg").src;
+    document.getElementById("imgModal").classList.add("open");
+}
+
 function closeModal() { document.getElementById("imgModal").classList.remove("open"); }
 
-// Close menu when clicking outside
 window.onclick = function(event) {
-    if (!event.target.matches('.avatar') && !event.target.matches('.avatar-overlay')) {
-        const menu = document.getElementById("avatarMenu");
-        if (menu.classList.contains('open')) menu.classList.remove('open');
+    if (!event.target.closest('.avatar-wrap')) {
+        document.getElementById("avatarMenu").classList.remove("open");
     }
 }
 

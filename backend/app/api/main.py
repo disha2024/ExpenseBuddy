@@ -7,7 +7,6 @@ from app.api.routes import auth, profile, expenses, categories
 from app.db.database import create_db_and_tables
 
 app = FastAPI(title="Expense Tracker API")
-
 @app.on_event("startup")
 def on_startup():
     create_db_and_tables()
@@ -67,6 +66,7 @@ if not os.path.exists("uploads"):
 app.include_router(auth.router, prefix="/auth")
 app.include_router(profile.router)
 app.include_router(expenses.router)
+
 app.include_router(categories.router)
 # app.include_router(pages.router)
 

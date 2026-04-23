@@ -14,17 +14,17 @@ from app.db.database import get_async_session
 from app.models.models import User
 
 
-# ── CONFIG ─────────────────────────────────────────────────────
+#CONFIG 
 SECRET = "changethis123secret999keyforjwt256bitsminimumlength"
 TOKEN_LIFETIME = 60 * 60 * 24  # 24 hours
 
 
-# ── USER DATABASE ──────────────────────────────────────────────
+#USER DATABASE 
 async def get_user_db(session: AsyncSession = Depends(get_async_session)):
     yield SQLAlchemyUserDatabase(session, User)
 
 
-# ── USER MANAGER ──────────────────────────────────────────────
+# USER MANAGER 
 class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
     reset_password_token_secret = SECRET
     verification_token_secret = SECRET
@@ -48,7 +48,7 @@ async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
 
 
-# ── JWT AUTH BACKEND ───────────────────────────────────────────
+# JWT AUTH BACKEND 
 bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 
@@ -63,13 +63,13 @@ auth_backend = AuthenticationBackend(
 )
 
 
-# ── FASTAPI USERS INSTANCE 
+#FASTAPI USERS INSTANCE 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
     [auth_backend],
 )
 
 
-# ── CURRENT USER HELPERS
+#  CURRENT USER HELPERS
 current_active_user = fastapi_users.current_user(active=True)
 current_active_verified_user = fastapi_users.current_user(active=True, verified=True)

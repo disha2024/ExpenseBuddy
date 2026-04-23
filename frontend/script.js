@@ -1,4 +1,4 @@
-// Prevent duplicate declaration errors
+// 1. Initialize Globals
 if (typeof API_BASE === 'undefined') {
     window.API_BASE = window.location.origin;
 }
@@ -6,6 +6,73 @@ if (typeof API_BASE === 'undefined') {
 function getToken() { return localStorage.getItem("access_token"); }
 function getCurrencySymbol() { return localStorage.getItem("currency_symbol") || "₹"; }
 
+// 2. UI Helper for Custom Category
+function toggleCustomCategory() {
+    const select = document.getElementById("categorySelect");
+    const customInput = document.getElementById("customCategoryInput");
+    
+    if (select && select.value === "others") {
+        customInput.style.display = "block";
+        customInput.focus();
+    } else if (customInput) {
+        customInput.style.display = "none";
+        customInput.value = "";
+    }
+}
+
+async function saveExpense(event) {
+    if (event) event.preventDefault();
+
+    const titleEl = document.getElementById("title");
+    const amountEl = document.getElementById("amount");
+    const dateEl = document.getElementById("date");
+    const selectEl = document.getElementById("categorySelect");
+    const customInputEl = document.getElementById("customCategoryInput");
+
+    // Fix the ReferenceError: Define the category name logic
+    let finalCategory = selectEl.value;
+    if (selectEl.value === "others" && customInputEl) {
+        finalCategory = customInputEl.value.trim();
+    }
+
+    if (!titleEl.value || !amountEl.value || !finalCategory || !dateEl.value) {
+        alert("⚠️ Please fill in all fields");
+        return;
+    }
+
+    const expenseData = {
+        title: titleEl.value,
+        // Fix the unit mismatch: Multiply by 100
+        amount: Math.round(parseFloat(amountEl.value) * 100), 
+        category_name: finalCategory,
+        date: dateEl.value
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/expenses/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(expenseData)
+        });
+
+        if (res.ok) {
+            alert("✅ Expense saved successfully!");
+            location.reload(); 
+        } else {
+            const err = await res.json();
+            alert("❌ Save failed: " + (err.detail || "Check console"));
+        }
+    } catch (error) {
+        console.error("Save error:", error);
+    }
+}
+
+  
+
+// 4. Loading and Displaying Data
 async function loadCategories() {
     try {
         const response = await fetch(`${API_BASE}/categories`, {
@@ -25,279 +92,6 @@ async function loadCategories() {
     } catch (err) { console.error(err); }
 }
 
-
-async function addExpense(event) {
-    if (event) event.preventDefault();
-
-    const select = document.getElementById("categorySelect");
-    const customInput = document.getElementById("customCategoryInput");
-    
-    // Logic: Use the dropdown value, UNLESS it's 'others', then use the custom text
-    let finalCategory = select.value;
-    if (select.value === "others") {
-        finalCategory = customInput.value.trim();
-    }
-
-    if (!finalCategory) {
-        alert("Please select or type a category!");
-        return;
-    }
-
-    const expenseData = {
-        title: document.getElementById("title").value,
-        amount: parseFloat(document.getElementById("amount").value),
-        category_name: finalCategory, // This is what your backend expects
-        date: document.getElementById("date").value || null
-    };
-
-
-    const res = await fetch(`${API_BASE}/expenses`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${getToken()}`
-        },
-        body: JSON.stringify(expenseData)
-    });
-
-    if (res.ok) {
-        alert("Saved!");
-        location.reload();
-    }
-}
-
-
-
-async function updateExpense(id, title, amountDecimal, category, date) {
-    const subunits = Math.round(parseFloat(amountDecimal) * 100);
-    const response = await fetch(`${API_BASE}/expenses/${id}`, {
-        method: "PUT",
-        headers: { 
-            "Content-Type": "application/json", 
-            "Authorization": `Bearer ${getToken()}` 
-        },
-        body: JSON.stringify({ 
-            title, 
-            amount: subunits, 
-            category_name: category, 
-            date: date || null 
-        })
-    });
-    if (response.ok) { clearForm(); loadExpenses(); }
-}
-
-// 1. Show/Hide custom category input
-function toggleCustomCategory() {
-    const select = document.getElementById("categorySelect");
-    const customInput = document.getElementById("customCategoryInput");
-    
-    if (select.value === "others") {
-        customInput.style.display = "block";
-        customInput.focus();
-    } else {
-        customInput.style.display = "none";
-        customInput.value = "";
-    }
-}
-
-// 2. Main function to gather data and POST
-async function saveExpense(event) {
-    if (event) event.preventDefault();
-
-    const title = document.getElementById("title").value;
-    const amount = document.getElementById("amount").value;
-    const date = document.getElementById("date").value;
-    
-    // Pick between dropdown or custom input
-    const select = document.getElementById("categorySelect");
-    const customInput = document.getElementById("customCategoryInput");
-    const categoryName = (select.value === "others") ? customInput.value : select.value;
-
-    if (!title || !amount || !categoryName || !date) {
-        alert("⚠️ Please fill in all fields!");
-        return;
-    }
-
-    const expenseData = {
-        title: title,
-        amount: parseFloat(amount), 
-        category_name: categoryName, // String for your get_or_create logic
-        date: date
-    };
-
-    try {
-        const response = await fetch(`${API_BASE}/expenses`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${getToken()}`
-            },
-            body: JSON.stringify(expenseData)
-        });
-
-        if (response.ok) {
-            alert("✅ Expense Saved!");
-            location.reload(); 
-        } else {
-            const err = await response.json();
-            alert("❌ Error: " + (err.detail || "Upload failed"));
-        }
-    } catch (error) {
-        console.error("Fetch error:", error);
-        alert("❌ Server is unreachable.");
-    }
-}
-
-
-async function saveExpense(event) {
-    if (event) event.preventDefault();
-
-    // 1. Get the elements safely
-    const titleEl = document.getElementById("title");
-    const amountEl = document.getElementById("amount");
-    const dateEl = document.getElementById("date");
-    const selectEl = document.getElementById("categorySelect");
-    const customInputEl = document.getElementById("customCategoryInput");
-
-    // 2. Check if elements exist to prevent "null" errors
-    if (!titleEl || !amountEl || !dateEl || !selectEl) {
-        console.error("Missing elements: check if IDs in HTML match script.js");
-        return;
-    }
-
-    // 3. Logic: Use the dropdown value, UNLESS it's 'others'
-    let finalCategory = selectEl.value;
-    if (selectEl.value === "others" && customInputEl) {
-        finalCategory = customInputEl.value.trim();
-    }
-
-    // 4. Validate that no fields are empty
-    if (!titleEl.value || !amountEl.value || !finalCategory || !dateEl.value) {
-        alert("⚠️ Please fill in all fields (Title, Amount, Category, and Date)");
-        return;
-    }
-
-    // 5. Prepare the Data Object
-    const expenseData = {
-        title: titleEl.value,
-        amount: parseFloat(amountEl.value),
-        category_name: finalCategory,
-        date: dateEl.value
-    };
-
-    // 6. Send the POST Request
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-        alert("You are not logged in!");
-        return;
-    }
-
-    try {
-        console.log("Sending POST request to /expenses...", expenseData);
-        
-        const res = await fetch(`${API_BASE}/expenses`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify(expenseData)
-        });
-
-        if (res.ok) {
-            const savedExpense = await res.json();
-            console.log("Success:", savedExpense);
-            alert("✅ Expense saved successfully!");
-            
-            // Reload page to show new item in History
-            location.reload(); 
-        } else {
-            const errorData = await res.json();
-            console.error("Server Error:", errorData);
-            alert("❌ Failed to save: " + (errorData.detail || "Unknown error"));
-        }
-    } catch (error) {
-        console.error("Network Error:", error);
-        alert("❌ Error: Could not connect to the server.");
-    }
-}
-function clearForm() {
-    document.getElementById("expense_id").value = "";
-    document.getElementById("title").value = "";
-    document.getElementById("amount").value = "";
-    document.getElementById("category").value = "";
-    document.getElementById("date").value = "";
-    document.getElementById("saveBtn").innerHTML = "💾 Save Expense";
-    document.getElementById("cancelBtn").style.display = "none";
-}
-
-function editExpense(id, title, decimalAmount, category, date) {
-    document.getElementById("expense_id").value = id;
-    document.getElementById("title").value = title;
-    document.getElementById("amount").value = decimalAmount; 
-    document.getElementById("category").value = category;
-    document.getElementById("date").value = date;
-    
-    document.getElementById("saveBtn").innerHTML = "🔄 Update Expense";
-    document.getElementById("cancelBtn").style.display = "inline-block";
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-
-function displayExpenses(expenses) {
-    const tableBody = document.getElementById("expenseTable");
-    const totalBox = document.getElementById("totalAmount");
-    const emptyState = document.getElementById("emptyState");
-
-    // Safety check to ensure elements exist
-    if (!tableBody || !totalBox) return;
-
-    // Clear the current table rows
-    tableBody.innerHTML = "";
-    
-    let totalSubunits = 0;
-
-    // Loop through each expense
-    expenses.forEach(exp => {
-        // 1. Accumulate the total using the raw integer (subunit)
-        const amt = Number(exp.amount) || 0;
-        totalSubunits += amt;
-
-        // 2. Format for display (Lowest Denomination: 3000 -> 30.00)
-        const decimalDisplay = (amt / 100).toFixed(2);
-        
-        const categoryName = exp.category_name || "General";
-        const expenseDate = exp.date || "N/A";
-
-        // 3. Create and append the row
-        const row = document.createElement("tr");
-        row.innerHTML = `
-            <td>${exp.title}</td>
-            <td>${getCurrencySymbol()}${decimalDisplay}</td>
-            <td>${categoryName}</td>
-            <td>${expenseDate}</td>
-            <td style="display: flex; gap: 8px; justify-content: center;">
-                <button class="edit-btn" onclick="editExpense(${exp.id}, '${exp.title.replace(/'/g, "\\'")}', ${decimalDisplay}, '${categoryName}', '${expenseDate}')">✏️</button>
-                <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️</button>
-            </td>
-        `;
-        tableBody.appendChild(row);
-    });
-
-    // 4. Update the Total Spent box (Total Subunits / 100)
-    totalBox.textContent = (totalSubunits / 100).toFixed(2);
-
-    // 5. Toggle the "No expenses recorded yet" message
-    if (emptyState) {
-        if (expenses.length > 0) {
-            emptyState.style.display = "none";  // Hide if there is data
-        } else {
-            emptyState.style.display = "block"; // Show if table is empty
-        }
-    }
-}
-
-
 async function loadExpenses() {
     const res = await fetch(`${API_BASE}/expenses`, { 
         headers: { "Authorization": `Bearer ${getToken()}` } 
@@ -305,25 +99,148 @@ async function loadExpenses() {
     if (res.ok) displayExpenses(await res.json());
 }
 
-async function deleteExpense(id) {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
+function displayExpenses(expenses) {
+    const tableBody = document.getElementById("expenseTable");
+    const totalBox = document.getElementById("totalAmount");
+    const emptyState = document.getElementById("emptyState");
 
-    const response = await fetch(`${API_BASE}/expenses/${id}`, {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${getToken()}` }
+    if (!tableBody || !totalBox) return;
+
+    tableBody.innerHTML = "";
+    let totalSubunits = 0;
+
+    expenses.forEach(exp => {
+        const amt = Number(exp.amount) || 0;
+        totalSubunits += amt;
+        const decimalDisplay = (amt / 100).toFixed(2);
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${exp.title}</td>
+            <td>${getCurrencySymbol()}${decimalDisplay}</td>
+            <td>${exp.category_name || "General"}</td>
+            <td>${exp.date || "N/A"}</td>
+            <td style="display: flex; gap: 8px; justify-content: center;">
+                <button class="edit-btn" onclick="editExpense(${exp.id}, '${exp.title.replace(/'/g, "\\'")}', ${decimalDisplay}, '${exp.category_name}', '${exp.date}')">✏️</button>
+                <button class="delete-btn" onclick="deleteExpense(${exp.id})">🗑️</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
     });
 
-    if (response.ok) {
-        loadExpenses(); 
-    } else {
-        alert("Delete failed on server.");
+    totalBox.textContent = (totalSubunits / 100).toFixed(2);
+    if (emptyState) emptyState.style.display = expenses.length > 0 ? "none" : "block";
+}
+
+function editExpense(id, title, decimalDisplay, category, date) {
+    // Fill the inputs
+    document.getElementById("expense_id").value = id;
+    document.getElementById("title").value = title;
+    
+    // Ensure this is the decimal version (e.g., 5.50)
+    document.getElementById("amount").value = decimalDisplay; 
+    document.getElementById("date").value = date;
+    
+    const select = document.getElementById("categorySelect");
+    if (select) select.value = category;
+
+    // Change Save button to Update
+    const saveBtn = document.getElementById("saveBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
+    
+    if (saveBtn) {
+        saveBtn.innerHTML = "🔄 Update Expense";
+        // Pass the ID to the update logic
+        saveBtn.onclick = (e) => updateExpenseLogic(e, id);
+    }
+    if (cancelBtn) cancelBtn.style.display = "inline-block";
+}
+
+async function updateExpenseLogic(event, id) {
+    if (event) event.preventDefault();
+
+    const titleEl = document.getElementById("title");
+    const amountEl = document.getElementById("amount");
+    const dateEl = document.getElementById("date");
+    const selectEl = document.getElementById("categorySelect");
+    const customInputEl = document.getElementById("customCategoryInput");
+
+    // 1. FIX THE REFERENCE ERROR: Define how to get the category name
+    let categoryName = selectEl.value;
+    if (selectEl.value === "others" && customInputEl) {
+        categoryName = customInputEl.value.trim();
+    }
+
+    // 2. Validation
+    if (!titleEl.value || !amountEl.value || !categoryName || !dateEl.value) {
+        alert("⚠️ Please fill in all fields");
+        return;
+    }
+
+    const expenseData = {
+        title: titleEl.value,
+        amount: Math.round(parseFloat(amountEl.value) * 100),
+        category_name: categoryName,
+        date: dateEl.value
+    };
+
+    try {
+        const res = await fetch(`${API_BASE}/expenses/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("access_token")}`
+            },
+            body: JSON.stringify(expenseData)
+        });
+
+        if (res.ok) {
+            alert("✅ Updated successfully!");
+            clearForm(); // This will reset the button back to "Save"
+            location.reload(); 
+        } else {
+            const err = await res.json();
+            alert("❌ Update failed: " + (err.detail || "Check console"));
+        }
+    } catch (error) {
+        console.error("Update error:", error);
     }
 }
 
 
+async function deleteExpense(id) {
+    if (!confirm("Are you sure?")) return;
+    const res = await fetch(`${API_BASE}/expenses/${id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${getToken()}` }
+    });
+    if (res.ok) loadExpenses();
+}
 
-// Attach to window so onclick works even if loaded as a module
+function clearForm() {
+    // 1. Clear all inputs
+    document.getElementById("expense_id").value = "";
+    document.getElementById("title").value = "";
+    document.getElementById("amount").value = "";
+    document.getElementById("date").value = "";
+    document.getElementById("categorySelect").value = "";
+    
+    // 2. Reset the Save Button
+    const saveBtn = document.getElementById("saveBtn");
+    if (saveBtn) {
+        saveBtn.innerHTML = "💾 Save Expense";
+        saveBtn.onclick = (e) => saveExpense(e); // Set it back to save
+    }
+
+    // 3. Hide the Cancel button
+    const cancelBtn = document.getElementById("cancelBtn");
+    if (cancelBtn) cancelBtn.style.display = "none";
+}
+
+// 5. Expose functions to the HTML window
+window.toggleCustomCategory = toggleCustomCategory;
 window.saveExpense = saveExpense;
 window.deleteExpense = deleteExpense;
-window.editExpense = editExpense;
 window.clearForm = clearForm;
+window.editExpense = editExpense;
+window.updateExpenseLogic = updateExpenseLogic;

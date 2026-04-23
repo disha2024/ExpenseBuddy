@@ -50,16 +50,25 @@ class Expense(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     title: str
+    
+    # Using Integer for amount (paise/cents) is great for math precision!
     amount: int = Field(sa_column=Column("amount", Integer, nullable=False))
-    # SQLModel native way (Much safer!)
+    
+    # NEW FIELD: This "remembers" the currency of the receipt
+    currency: str = Field(default="INR", sa_column=Column(String(10), nullable=False))
+    
     category_id: Optional[int] = Field(
         default=None, 
-        foreign_key="categories.id", # Points to table_name.column_name
+        foreign_key="categories.id",
         ondelete="SET NULL"
     )
     
     date: datetime.date = Field(default_factory=datetime.date.today)
-    user_id: int = Field(foreign_key="users.id")
+    
+    # Added ondelete="CASCADE" so deleting a user wipes their expenses automatically
+    user_id: int = Field(
+        sa_column=Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    )
     
     # Relationships
     user: "User" = Relationship(back_populates="expenses")

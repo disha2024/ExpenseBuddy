@@ -13,87 +13,63 @@ from app.db.database import get_async_session
 router = APIRouter(prefix="/expenses", tags=["expenses"])
 
 
-# ── HELPER: GET OR CREATE CATEGORY ────────────────────────────
-async def get_or_create_category(session: AsyncSession, name: str, user_id) -> Category | None:
-    """
-    MySQL-safe get-or-create. No savepoints. Commit-isolated insert.
-    """
-    # 1. Initial lookup
+#  GET OR CREATE CATEGORY 
+async def get_or_create_category(session: AsyncSession, category_name: str, user_id: int) -> Category | None:
+    
+    # 2. Check the first lookup
     result = await session.execute(
-        select(Category).where(Category.name == name, Category.user_id == user_id)
+        select(Category).where(Category.name == category_name, Category.user_id == user_id)
     )
     category = result.scalar_one_or_none()
-    print(f"🔍 Lookup '{name}' for user {user_id}: {'FOUND' if category else 'NOT FOUND'}")
+    
     if category:
         return category
 
-    # 2. Try inserting with isolated commit
     try:
-        category = Category(name=name, user_id=user_id)
+
+        category = Category(name=category_name, user_id=user_id)
         session.add(category)
         await session.commit()
         await session.refresh(category)
-        print(f"✅ Created category '{name}' for user {user_id} with id={category.id}")
         return category
 
     except Exception as e:
-        print(f"⚠️ Insert failed (likely duplicate): {e}")
+        print(f"⚠️ Insert failed: {e}")
         await session.rollback()
 
-    # 3. Re-query after rollback
     result = await session.execute(
-        select(Category).where(Category.name == name, Category.user_id == user_id)
+        select(Category).where(Category.name == category_name, Category.user_id == user_id)
     )
     category = result.scalar_one_or_none()
-    print(f"🔁 Re-query after rollback: {'FOUND' if category else 'STILL NOT FOUND ❌'}")
     return category
 
 
 #CREATE EXPENSE 
-from app.models.models import Category, Expense # Ensure these are imported
-
-@router.post("")
+@router.post("/")
 async def create_expense(
     expense_in: ExpenseCreate,
     user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    try:
-        # 1. Clean the category name (remove extra spaces)
-        cat_name = expense_in.category_name.strip()
+ 
+    category = await get_or_create_category(session, expense_in.category_name, user.id)
 
-        # 2. Check if this category already exists for THIS user
-        statement = select(Category).where(
-            Category.name == cat_name,
-            Category.user_id == user.id
-        )
-        result = await session.execute(statement)
-        category = result.scalars().first()
+    # Create the DB model instance
+    db_expense = Expense(
+        title=expense_in.title,
+        # CALL THE HELPER METHOD HERE
+        amount=expense_in.get_amount_in_subunits(), 
+        currency=expense_in.currency,
+        date=expense_in.date,
+        category_id=category.id,
+        user_id=user.id
+    )
 
-        # 3. If it doesn't exist, create it on the fly!
-        if not category:
-            category = Category(name=cat_name, user_id=user.id)
-            session.add(category)
-            await session.flush() # This populates category.id without committing yet
+    session.add(db_expense)
+    await session.commit()
+    await session.refresh(db_expense)
+    return db_expense
 
-        # 4. Create the expense using the ID we just found or created
-        new_expense = Expense(
-            title=expense_in.title,
-            amount=expense_in.get_amount_in_subunits(), # Uses your schema helper!
-            category_id=category.id,
-            user_id=user.id,
-            date=expense_in.date or datetime.now().date()
-        )
-
-        session.add(new_expense)
-        await session.commit()
-        await session.refresh(new_expense)
-        
-        return new_expense
-
-    except Exception as e:
-        await session.rollback()
-        raise HTTPException(status_code=500, detail=str(e))
 
 # ── GET EXPENSES 
 @router.get("", response_model=List[ExpenseResponse])

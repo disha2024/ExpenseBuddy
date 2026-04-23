@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <title>ExpenseBuddy</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         
-        /* CENTER THE LOGIN BOX */
         body { 
             background: linear-gradient(135deg, #1f1c2c, #928dab); 
             min-height: 100vh; 
@@ -15,11 +15,10 @@
             align-items: center;        
         }
 
-        /* RESET FLEX FOR DASHBOARD (Prevents sidebar from shrinking) */
         #dashboardSection { 
             width: 100%; 
             height: 100%; 
-            align-self: flex-start; /* Keeps dashboard at the top */
+            align-self: flex-start;
         }
         
         .layout { display: flex; width: 100%; }
@@ -39,12 +38,34 @@
         .dashboard { flex: 1; padding: 40px; }
         h1 { text-align: center; color: white; margin-bottom: 30px; }
         .card { background: rgb(240, 223, 195); padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-bottom: 25px; }
-        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
-        input, select { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; font-size: 14px; }
+        
+        /* FORM STYLING */
+        .expense-form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-start;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+        }
+
+        .input-box { flex: 1; min-width: 150px; }
+        .input-box input, .input-box select {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            background: #ece3eb;
+            font-size: 14px;
+            color: #333 !important; 
+        }
+
         button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .primary-btn { background: linear-gradient(45deg, #667eea, #764ba2); color: white; }
+        .primary-btn:hover { transform: translateY(-2px); opacity: 0.9; }
         
-        /* TABLE & BUTTONS */
+        /* TABLE & HISTORY */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 15px; text-align: center; border-bottom: 1px solid #eee; color: #333; }
         th { background: #cd600c; color: white; }
@@ -52,99 +73,15 @@
         .delete-btn { background: #ff4d4d; color: white; padding: 6px 12px; font-size: 12px; border-radius: 4px; }
 
         /* AUTH CONTAINER */
-        .auth-container { 
-            background: white; 
-            padding: 35px; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
-            width: 100%; 
-            max-width: 420px; 
-        }
-        .form-group { margin-bottom: 25px; }
-        .pwd-wrap { position: relative; width: 100%; }
-        .pwd-wrap input { padding-right: 45px !important; }
-        .eye-btn { position: absolute !important; right: 10px !important; top: 50% !important; transform: translateY(-50%) !important; background: none !important; border: none !important; cursor: pointer !important; z-index: 10; width: auto !important; font-size: 18px; }
+        .auth-container { background: white; padding: 35px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); width: 100%; max-width: 420px; }
+        .form-group { margin-bottom: 20px; }
+        .pwd-wrap { position: relative; }
+        .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 18px; }
         .toggle-text { text-align: center; margin-top: 20px; color: #666; font-size: 14px; }
-        .toggle-text a { color: #667eea; cursor: pointer; font-weight: bold; text-decoration: none; }
+        .toggle-text a { color: #667eea; cursor: pointer; font-weight: bold; }
         .message { padding: 12px; border-radius: 8px; margin-bottom: 20px; text-align: center; font-weight: bold; }
         .error { background: #f8d7da; color: #721c24; }
         .success { background: #d4edda; color: #155724; }
-
-
-        .expense-form-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-items: flex-start;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 20px;
-    border-radius: 12px;
-}
-
-.input-box {
-    flex: 1;
-    min-width: 150px;
-}
-
-/* 1. Set a consistent color for the actual text/values */
-.input-box input, 
-.input-box select {
-    width: 100%;
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #444;
-    background: #ece3eb;
-    font-size: 14px;
-    /* Use a clear, solid color */
-    color: #555555 !important; 
-    opacity: 1 !important;
-}
-
-/* 2. Force the placeholders to match the text color exactly */
-.input-box input::placeholder {
-    color: #555555 !important;
-    opacity: 1 !important;
-}
-
-/* 3. Ensure the Date and Select dropdowns don't look faint */
-.input-box input[type="date"],
-.input-box select {
-    color: #555555;
-    /* This removes the default 'washed out' look in some browsers */
-    -webkit-appearance: none; 
-    appearance: none;
-    /* Add a custom arrow if needed, or keep default */
-}
-
-/* 4. Fix for the little calendar icon in the date picker */
-input[type="date"]::-webkit-calendar-picker-indicator {
-    opacity: 0.6; /* Matches the icon darkness to the text */
-    cursor: pointer;
-}
-
-.category-wrapper input {
-    margin-top: 8px;
-    border-color: #6c5ce7; /* Highlight custom input */
-}
-
-.save-button {
-    background: #6c5ce7;
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: 0.3s;
-}
-
-.save-button:hover {
-    background: #a29bfe;
-    transform: translateY(-2px);
-}
-
-
-
     </style>
 </head>
 <body>
@@ -154,7 +91,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         <div class="sidebar">
             <div class="sidebar-header">
                 <h2>💰 ExpenseBuddy</h2>
-                <a href="/profile.html"><img id="sidebarAvatar" src="" class="sidebar-avatar"></a>
+                <a href="/profile.html"><img id="sidebarAvatar" src="" class="sidebar-avatar" alt="Profile"></a>
             </div>
             <div class="total-box">Total Spent <span id="currencySymbol">₹</span> <span id="totalAmount">0.00</span></div>
             <a href="/dashboard.html" class="dashboard-nav-btn">📊 View Full Dashboard</a>
@@ -162,48 +99,59 @@ input[type="date"]::-webkit-calendar-picker-indicator {
         </div>
 
         <div class="dashboard">
-            <h1>💸Track your all expenses💸</h1>
+            <h1>💸 Track your expenses 💸</h1>
+            
             <div class="card">
-                
-                <div class="add-expense-container">
                 <h3>Add New Expense</h3>
-    <form id="expenseForm" class="expense-form-row">
-        <div class="input-box">
-            <input type="text" id="title" placeholder="Title (e.g., Lunch)" required>
-        </div>
+                <form id="expenseForm" class="expense-form-row">
+                    <input type="hidden" id="expense_id">
 
-        <div class="input-box">
-            <input type="number" id="amount" step="0.01" placeholder="Amount" required>
-        </div>
+                    <div class="input-box">
+                        <input type="text" id="title" placeholder="Title (e.g., Lunch)" required>
+                    </div>
 
-        <div class="input-box category-wrapper">
-            <select id="categorySelect" onchange="toggleCustomCategory()">
-                <option value="">-- Category --</option>
-                <option value="Food">Food</option>
-                <option value="Travel">Travel</option>
-                <option value="Bills">Bills</option>
-                <option value="others">Others...</option>
-            </select>
-            <input type="text" id="customCategoryInput" placeholder="New Category Name" style="display: none;">
-        </div>
+                    <div class="input-box">
+                        <input type="number" id="amount" step="0.01" placeholder="Amount" required>
+                    </div>
 
-        <div class="input-box">
-            <input type="date" id="date" required>
-        </div>
+                    <div class="input-box">
+                        <select id="categorySelect" onchange="toggleCustomCategory()">
+                            <option value="">-- Category --</option>
+                            <option value="Food">Food</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Bills">Bills</option>
+                            <option value="others">Others...</option>
+                        </select>
+                        <input type="text" id="customCategoryInput" placeholder="New Category Name" style="display: none; margin-top: 8px;">
+                    </div>
 
-        
-    </form>
-</div>
+                    <div class="input-box">
+                        <input type="date" id="date" required>
+                    </div>
+                </form>
                 
-                <br>
-                <button class="primary-btn" type="button" onclick="saveExpense(event)" >💾 Save Expense</button>
-
-                <button id="cancelBtn" class="cancel-btn" style="display:none; width: 100px; background: #6c757d; color: white;" onclick="clearForm()">Cancel</button>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button type="button" id="saveBtn" class="primary-btn" style="flex: 2;" onclick="saveExpense(event)">
+                        💾 Save Expense
+                    </button>
+                    <button type="button" id="cancelBtn" class="delete-btn" style="display:none; flex: 1; background: #6c757d;" onclick="clearForm()">
+                        ❌ Cancel
+                    </button>
+                </div>
             </div>
+
             <div class="card">
                 <h2>History</h2>
                 <table>
-                    <thead><tr><th>Title</th><th>Amount</th><th>Category</th><th>Date</th><th>Action</th></tr></thead>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>Amount</th>
+                            <th>Category</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
                     <tbody id="expenseTable"></tbody>
                 </table>
                 <div id="emptyState" style="text-align:center; padding:30px; color:gray;">No expenses recorded yet.</div>
@@ -215,9 +163,12 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 <div id="authSection">
     <div class="auth-container">
         <div id="loginForm">
-            <div style="text-align: center; font-size: 40px; margin-bottom: 20px;">🔐Login </div>
+            <div style="text-align: center; font-size: 32px; margin-bottom: 20px;">🔐 Login</div>
             <div id="loginMessage"></div>
-            <div class="form-group"><label>Email</label><input type="email" id="loginEmail" placeholder="you@example.com"></div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" placeholder="you@example.com">
+            </div>
             <div class="form-group">
                 <label>Password</label>
                 <div class="pwd-wrap">
@@ -225,40 +176,50 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                     <button class="eye-btn" type="button" onclick="togglePwd('loginPassword', this)">👁️</button>
                 </div>
             </div>
-            <button class="primary-btn" style="width:100%; margin-top: 10px;" onclick="handleLogin()">Login</button>
+            <button class="primary-btn" style="width:100%;" onclick="handleLogin()">Login</button>
             <div class="toggle-text">Need an account? <a onclick="toggleForm()">Register</a></div>
         </div>
 
         <div id="registerForm" style="display:none;">
-            <h1>📝 Register</h1>
+            <div style="text-align: center; font-size: 32px; margin-bottom: 20px;">📝 Register</div>
             <div id="registerMessage"></div>
             <div class="form-group"><label>Username</label><input type="text" id="regUser"></div>
             <div class="form-group"><label>Email</label><input type="email" id="regEmail"></div>
             <div class="form-group">
-                <label>Currency</label>
-                <select id="regCurrency">
+                <label>Default Currency</label>
+                <select id="editCurrency">
                     <option value="INR">INR (₹)</option>
                     <option value="USD">USD ($)</option>
                     <option value="EUR">EUR (€)</option>
                     <option value="GBP">GBP (£)</option>
                 </select>
+                <p id="currencyHint" style="font-size: 11px; color: #cd600c; margin-top: 5px; font-weight: bold; display: none;"></p>
             </div>
-            <div class="form-group"><label>Password</label><div class="pwd-wrap"><input type="password" id="regPass"><button class="eye-btn" type="button" onclick="togglePwd('regPass', this)">👁️</button></div></div>
-            <div class="form-group"><label>Verify Password</label><div class="pwd-wrap"><input type="password" id="regVerify"><button class="eye-btn" type="button" onclick="togglePwd('regVerify', this)">👁️</button></div></div>
-            <button class="primary-btn" style="width:100%; margin-top: 10px;" onclick="handleRegister()">Sign Up</button>
-            <div class="toggle-text">Joined already? <a onclick="toggleForm()">Login</a></div>
+            <div class="form-group">
+                <label>Password</label>
+                <div class="pwd-wrap"><input type="password" id="regPass"><button class="eye-btn" type="button" onclick="togglePwd('regPass', this)">👁️</button></div>
+            </div>
+            <div class="form-group">
+                <label>Verify Password</label>
+                <div class="pwd-wrap"><input type="password" id="regVerify"><button class="eye-btn" type="button" onclick="togglePwd('regVerify', this)">👁️</button></div>
+            </div>
+            <button class="primary-btn" style="width:100%;" onclick="handleRegister()">Sign Up</button>
+            <div class="toggle-text">Already have an account? <a onclick="toggleForm()">Login</a></div>
         </div>
     </div>
 </div>
 
 <script>
+    // Configuration
     if (typeof API_BASE === 'undefined') {
         var API_BASE = window.location.origin;
     }
 
     function toggleForm() {
-        document.getElementById("loginForm").style.display = (document.getElementById("loginForm").style.display === "none") ? "block" : "none";
-        document.getElementById("registerForm").style.display = (document.getElementById("registerForm").style.display === "none") ? "block" : "none";
+        const login = document.getElementById("loginForm");
+        const register = document.getElementById("registerForm");
+        login.style.display = (login.style.display === "none") ? "block" : "none";
+        register.style.display = (register.style.display === "none") ? "block" : "none";
     }
 
     function togglePwd(id, btn) {
@@ -278,8 +239,14 @@ input[type="date"]::-webkit-calendar-picker-indicator {
                 const data = await res.json();
                 localStorage.setItem("access_token", data.access_token);
                 location.reload();
-            } else { msg.textContent = "Invalid Email or Password"; msg.className = "message error"; }
-        } catch (e) { msg.textContent = "Server Error"; msg.className = "message error"; }
+            } else { 
+                msg.textContent = "Invalid Email or Password"; 
+                msg.className = "message error"; 
+            }
+        } catch (e) { 
+            msg.textContent = "Server Error"; 
+            msg.className = "message error"; 
+        }
     }
 
     async function handleRegister() {
@@ -304,32 +271,48 @@ input[type="date"]::-webkit-calendar-picker-indicator {
             if (res.ok) {
                 msg.textContent = "Success! Please login."; msg.className = "message success";
                 setTimeout(toggleForm, 1500);
-            } else { msg.textContent = "This email is already registered"; msg.className = "message error"; }
-        } catch (e) { msg.textContent = "Server Error"; msg.className = "message error"; }
+            } else { 
+                msg.textContent = "Registration failed"; 
+                msg.className = "message error"; 
+            }
+        } catch (e) { 
+            msg.textContent = "Server Error"; 
+            msg.className = "message error"; 
+        }
     }
 
-    function logout() { localStorage.clear(); location.reload(); }
+    function logout() { 
+        localStorage.clear(); 
+        location.reload(); 
+    }
 
     window.onload = async () => {
         const token = localStorage.getItem("access_token");
         if (token) {
-            // Adjust body flex for dashboard view
-            document.body.style.display = "block"; 
             document.getElementById("authSection").style.display = "none";
             document.getElementById("dashboardSection").style.display = "block";
-            
-            const res = await fetch(`${API_BASE}/auth/users/me`, { headers: { "Authorization": `Bearer ${token}` } });
+            document.body.style.display = "block"; 
+
+            const res = await fetch(`${API_BASE}/auth/users/me`, { 
+                headers: { "Authorization": `Bearer ${token}` } 
+            });
+
             if (res.ok) {
                 const user = await res.json();
                 const symbols = {"INR":"₹", "USD":"$", "EUR":"€", "GBP":"£"};
                 const sym = symbols[user.currency] || "₹";
+                
                 document.getElementById("currencySymbol").textContent = sym;
                 localStorage.setItem("currency_symbol", sym);
+                localStorage.setItem("user_currency", user.currency);
+                
                 document.getElementById("sidebarAvatar").src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username)}&background=667eea&color=fff`;
                 
                 if (typeof loadExpenses === "function") loadExpenses();
                 if (typeof loadCategories === "function") loadCategories();
-            } else { logout(); }
+            } else { 
+                logout(); 
+            }
         }
     };
 </script>

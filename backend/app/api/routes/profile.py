@@ -1,14 +1,18 @@
 import os
 import shutil
+from fastapi import UploadFile, File
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import select, delete
 from sqlmodel.ext.asyncio.session import AsyncSession
+from app.db.database import get_db
+from sqlmodel import Session
 
 from app.db.database import get_async_session
 from app.models.models import User, Expense
 from app.schemas.schemas import (
-    UserRead, ProfileUpdate, PasswordChange, CurrencyUpdate
+    UserRead, ProfileUpdate, PasswordChange, CurrencyUpdate,ProfileUpdate
 )
+
 from app.core.authentication import current_active_user
 from fastapi_users.password import PasswordHelper
 
@@ -79,54 +83,61 @@ async def change_password(
         raise HTTPException(status_code=500, detail=f"Error changing password: {str(e)}")
 
 
-# ── UPDATE CURRENCY 
+# UPDATE CURRENCY 
+from app.models.models import Expense
+from sqlalchemy import select, func
+
 @router.put("/currency")
 async def update_currency(
-    data: CurrencyUpdate,
-    current_user: User = Depends(current_active_user),
+    new_currency: str, 
+    user: User = Depends(current_active_user),
     session: AsyncSession = Depends(get_async_session)
 ):
-    try:
-        current_user.currency = data.currency
+    # 1. Check if user has any expenses
+    expense_check = await session.execute(
+        select(func.count(Expense.id)).where(Expense.user_id == user.id)
+    )
+    count = expense_check.scalar()
 
-        await session.commit()
-        await session.refresh(current_user)
+    if count > 0:
+        raise HTTPException(
+            status_code=400, 
+            detail="Cannot change currency after expenses have been recorded. Delete all expenses first."
+        )
 
-        return {"message": "Currency updated successfully"}
-
-    except Exception as e:
-        await session.rollback()
-        raise HTTPException(status_code=500, detail=f"Error updating currency: {str(e)}")
+    # 2. Update if no expenses found
+    user.currency = new_currency
+    session.add(user)
+    await session.commit()
+    
+    return {"message": "Currency updated successfully", "currency": new_currency}
 
 
 # UPLOAD PROFILE PICTURE 
 @router.post("/picture")
 async def upload_picture(
-    file: UploadFile = File(...),
-    current_user: User = Depends(current_active_user),
-    session: AsyncSession = Depends(get_async_session)
+    file: UploadFile = File(...), 
+    user=Depends(current_active_user),
+    session=Depends(get_async_session)
 ):
-    try:
-        os.makedirs(UPLOAD_DIR, exist_ok=True)
+    # 1. Create uploads folder if it doesn't exist
+    os.makedirs("uploads", exist_ok=True)
+    
+    # 2. Create a unique filename for the user
+    file_path = f"uploads/user_{user.id}.jpg"
+    
+    # 3. Save the ACTUAL file content (from any folder the user chose)
+    with open(file_path, "wb") as buffer:
+        shutil.copyfileobj(file.file, buffer)
+    
+    # 4. Update the user record in the DB with the new path
+    user.profile_picture = f"/{file_path}"
+    session.add(user)
+    await session.commit()
+    
+    return {"message": "Success", "path": user.profile_picture}
 
-        filename = f"user_{current_user.id}.jpg"
-        file_path = os.path.join(UPLOAD_DIR, filename)
-
-        with open(file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        current_user.profile_picture = f"/uploads/{filename}"
-
-        await session.commit()
-
-        return {"picture_url": current_user.profile_picture}
-
-    except Exception as e:
-        await session.rollback()
-        raise HTTPException(status_code=500, detail=f"Error uploading picture: {str(e)}")
-
-
-# ── REMOVE PROFILE PICTURE
+#  REMOVE PROFILE PICTURE
 @router.delete("/picture")
 async def remove_profile_picture(
     current_user: User = Depends(current_active_user),
@@ -149,6 +160,33 @@ async def remove_profile_picture(
         await session.rollback()
         raise HTTPException(status_code=500, detail=f"Error removing picture: {str(e)}")
 
+
+#profile update
+@router.put("/profile")
+async def update_profile(
+    profile_data: ProfileUpdate, 
+    db: Session = Depends(get_db), 
+    current_user: User = Depends(current_active_user)
+):
+    # Check if currency is being changed
+    if profile_data.currency and profile_data.currency != current_user.currency:
+        # Check for existing expenses
+        expense_count = db.query(Expense).filter(Expense.user_id == current_user.id).count()
+        
+        if expense_count > 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Cannot change currency after expenses have been recorded. Delete all expenses to change currency."
+            )
+        
+        current_user.currency = profile_data.currency
+
+    # Continue with other updates (username, email, etc.)
+    current_user.username = profile_data.username
+    current_user.email = profile_data.email
+    
+    db.commit()
+    return {"message": "Profile updated successfully"}
 
 # ── DELETE ACCOUNT ─────────────────────────────────────────────
 @router.delete("/delete")

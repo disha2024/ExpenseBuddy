@@ -63,12 +63,17 @@ class CategoryResponse(BaseModel):
 
 class ExpenseBase(BaseModel):
     title: str
+    amount: int
     category_name: str  # Frontend sends "Food", "Rent", etc.
     date: Optional[date_type] = None
+    currency: str = "INR"
+
 
 class ExpenseCreate(ExpenseBase):
     # We take a float from the user (e.g., 10.50)
-    amount: float = Field(gt=0, description="Enter amount in decimal (e.g., 10.50)")
+    amount: int
+    currency: str = Field(default="INR")
+    category_name: Optional[str] = None
 
     def get_amount_in_subunits(self) -> int:
         """
@@ -79,7 +84,7 @@ class ExpenseCreate(ExpenseBase):
 
 class ExpenseUpdate(BaseModel):
     title: Optional[str] = None
-    amount: Optional[float] = Field(default=None, gt=0)
+    amount: Optional[int] = None
     category_name: Optional[str] = None
     date: Optional[date_type] = None
 
